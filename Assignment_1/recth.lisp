@@ -1,4 +1,4 @@
-#! /usr/local/bin/clisp
+#!/usr/bin/env clisp
 ;;;;
 ;;;; Towers of Hanoi - Recursive Solution
 ;;;; Mike Lane
@@ -39,7 +39,7 @@
 ;;; This is my own work. If n is 1, then move the disk from the post it is on to
 ;;; the desired post. Otherwise, move all the disks less than n to the aux post
 ;;; move disk n to the desired final post, and then move all the smaller disks
-;;; to the desired final post. Recursion takes care of the mess, beautifully.
+;;; to the desired final post. Recursion takes care of the mess beautifully.
 (defun towers-of-hanoi (n from to aux)
   (if (eq n 1)
     ; Base Case
@@ -51,8 +51,8 @@
 
 
 ;;; Handles parsing the command line arguments. This is not very sophisticated.
-;;; It will get tripped up on bad inputs, but it should suffice for homework,
-;;; hopefully.
+;;; It will get tripped up on bad inputs, but it should suffice for homework.
+;;; Hopefully.
 (if (eq 4 (list-length ext:*args*))
   ;; Only try to run TOH if there are 4 args
   (let ((n (parse-integer (car ext:*args*)))
