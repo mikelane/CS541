@@ -45,9 +45,9 @@
     ; Base Case
     (game-print `(moving disk ,n from post ,from to post ,to))
     ; Recursive steps
-    (progn (towers-of-hanoi (1- n) from aux to)
+    (progn (towers-of-hanoi (1- n) from aux to)  ; All above n from current to aux
            (game-print `(moving disk ,n from post ,from to post ,to))
-           (towers-of-hanoi (1- n) aux to from))))
+           (towers-of-hanoi (1- n) aux to from))))  ; All above n from aux to dest
 
 
 ;;; Handles parsing the command line arguments. This is not very sophisticated.
