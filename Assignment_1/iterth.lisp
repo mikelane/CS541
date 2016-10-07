@@ -1,6 +1,6 @@
 #!/usr/bin/env clisp
 ;;;;
-;;;; Towers of Hanoi - Recursive Solution
+;;;; Towers of Hanoi - Iterative Solution
 ;;;; Mike Lane
 ;;;; CS 541
 ;;;;
@@ -36,26 +36,28 @@
   (fresh-line))
 
 
-;;; This is my own work. This is the function that drives the movement of the
+;;; This is my own work. This is the function that drives the legal movement of the
 ;;; disks from source to destination.
 (defun legal-top-disk-move (src dest s d)
+  ;; Pop the top of the stack and store the values
   (let ((p1top (pop src))
         (p2top (pop dest)))
-    (cond ((eq p1top NIL)
-           (push p2top src)
+    (cond ((eq p1top NIL)     ; CASE 1, Source peg is empty
+           (push p2top src)   ; MOVE from dest to src
            (game-print `(moving disk ,p2top from post ,d to post ,s)))
-          ((eq p2top NIL)
-           (push p1top dest)
+          ((eq p2top NIL)     ; CASE 2, Destination peg is empty
+           (push p1top dest)  ; MOVE from src to dest
            (game-print `(moving disk ,p1top from post ,s to post ,d)))
-          ((> p1top p2top)
-           (push p1top src)
+          ((> p1top p2top)    ; CASE 3, Source peg has larger disk
+           (push p1top src)   ; MOVE from dest to source
            (push p2top src)
            (game-print `(moving disk ,p2top from post ,d to post ,s)))
-          (t
-            (push p2top dest)
+          (t                  ; CASE 4, Destination peg has larger disk
+            (push p2top dest) ; MOVE from source to dest
             (push p1top dest)
             (game-print `(moving disk ,p1top from post ,s to post ,d))))
-    `(,src ,dest)))
+    (values src dest)         ; RETURN the src and dest lists
+    ))
 
 
 ;;; This is my own work. This generates a a list (1 2 3 ... n)
@@ -69,28 +71,23 @@
 ;;; move disk n to the desired final post, and then move all the smaller disks
 ;;; to the desired final post. Recursion takes care of the mess beautifully.
 (defun towers-of-hanoi (n from to aux)
+  ;; Swap the destination and the auxillery posts if n is even
   (if (evenp n)
     (let ((tmp to))
       (setf to aux)
       (setf aux tmp)))
+  ;; Create the stacks that represent the posts
   (let ((SRC (number-sequence n))
         (AUXI ())
         (DEST ()))
-    (cond ((eq n 1) (legal-top-disk-move SRC DEST from to))
-          (t (loop for i from 1 to (1- (expt 2 n)) do
-                   ;(print `(,SRC ,AUXI ,DEST)
-                   (cond ((eq 1 (mod i 3))
-                          (setf ret (legal-top-disk-move SRC DEST from to))
-                          (setf SRC (car ret))
-                          (setf DEST (cadr ret)))
-                         ((eq 2 (mod i 3))
-                          (setf ret (legal-top-disk-move SRC AUXI from aux))
-                          (setf SRC (car ret))
-                          (setf AUXI (cadr ret)))
-                         ((eq 0 (mod i 3))
-                          (setf ret (legal-top-disk-move AUXI DEST aux to))
-                          (setf AUXI (car ret))
-                          (setf DEST (cadr ret)))))))))
+    ; There are 2 ^ n - 1 iterations in a Towers of Hanoi solution
+    (loop for i from 1 to (1- (expt 2 n)) do
+          (cond ((eq 1 (mod i 3))
+                 (multiple-value-setq (SRC DEST) (legal-top-disk-move SRC DEST from to)))
+                ((eq 2 (mod i 3))
+                 (multiple-value-setq (SRC AUXI) (legal-top-disk-move SRC AUXI from aux)))
+                ((eq 0 (mod i 3))
+                 (multiple-value-setq (AUXI DEST) (legal-top-disk-move AUXI DEST aux to)))))))
 
 
 ;;; Handles parsing the command line arguments. This is not very sophisticated.
@@ -104,7 +101,7 @@
         (aux (cadddr ext:*args*)))
     (towers-of-hanoi n from to aux))
   ;; Otherwise print out a help message
-  (progn (princ "usage: clisp recth.lisp n from to aux")
+  (progn (princ "usage: clisp iterth.lisp n from to aux")
          (princ #\newline)
          (princ "      n: number of disks")
          (princ #\newline)
@@ -114,6 +111,6 @@
          (princ #\newline)
          (princ "    aux: name of auxilery peg")
          (princ #\newline)
-         (princ "example: clisp recth.lisp 5 A C B")))
+         (princ "example: clisp iterth.lisp 5 A C B")))
 
 
