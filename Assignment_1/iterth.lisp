@@ -90,27 +90,35 @@
                  (multiple-value-setq (AUXI DEST) (legal-top-disk-move AUXI DEST aux to)))))))
 
 
+(defun print-help-message ()
+  (princ
+"
+usage: clisp iterth.lisp n from to aux
+
+       n: number of disks
+    from: name of starting peg
+      to: name of destination peg
+     aux: name of auxiliary peg
+
+ example: clisp iterth.lisp 5 A C B
+
+"))
+
+
 ;;; Handles parsing the command line arguments. This is not very sophisticated.
 ;;; It will get tripped up on bad inputs, but it should suffice for homework.
 ;;; Hopefully.
 (if (eq 4 (list-length ext:*args*))
   ;; Only try to run TOH if there are 4 args
-  (let ((n (parse-integer (car ext:*args*)))
+  (let ((n (handler-case (parse-integer (car ext:*args*))
+             (error (c)
+                    (print-help-message)
+                    (ext:exit 1))))
         (from (cadr ext:*args*))
         (to (caddr ext:*args*))
         (aux (cadddr ext:*args*)))
     (towers-of-hanoi n from to aux))
   ;; Otherwise print out a help message
-  (progn (princ "usage: clisp iterth.lisp n from to aux")
-         (princ #\newline)
-         (princ "      n: number of disks")
-         (princ #\newline)
-         (princ "   from: name of starting peg")
-         (princ #\newline)
-         (princ "     to: name of destination peg")
-         (princ #\newline)
-         (princ "    aux: name of auxilery peg")
-         (princ #\newline)
-         (princ "example: clisp iterth.lisp 5 A C B")))
+  (print-help-message))
 
 
