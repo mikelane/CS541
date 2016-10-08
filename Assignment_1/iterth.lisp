@@ -90,6 +90,7 @@
                  (multiple-value-setq (AUXI DEST) (legal-top-disk-move AUXI DEST aux to)))))))
 
 
+;;; Output a helpful CLI message
 (defun print-help-message ()
   (princ
 "
