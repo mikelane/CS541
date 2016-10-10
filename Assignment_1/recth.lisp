@@ -1,8 +1,12 @@
 #!/usr/bin/env clisp
+
+;;;;
+;;;; Mike Lane
+;;;; 10 Oct 2016
+;;;; CS 541
+;;;; Lab 1
 ;;;;
 ;;;; Towers of Hanoi - Recursive Solution
-;;;; Mike Lane
-;;;; CS 541
 ;;;;
 ;;;; I've made this program a CLI script that takes its parameters as space-
 ;;;; separated CLI arguments. There is a basic help function that informs the
