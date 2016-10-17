@@ -27,6 +27,43 @@
           )))
 
 
+;;; Return the mean of the values over all columns as a list
+;;;
+;;; ((num #(num))) => (num)
+;;;
+(defun column-means (data)
+  (let ((len (float (length (cdar data)))))
+    (flet ((col (i) (mapcar #'(lambda (row) (aref row i)) (mapcar #'cdr data))))
+      (loop for n from 0 below len
+            collect (/ (reduce #'+ (col n)) len)))))
+
+
+;;; Return the standard deviation of the values over all columns as a list. Must pass
+;;; in the value of the result of column-means
+;;;
+;;; ((num #(num)) (num)) => (num)
+;;;
+(defun column-stddev (data col-means)
+  (let ((len (float (length (cdar data)))))
+  (flet ((col (i) (mapcar #'(lambda (row) (aref row i)) (mapcar #'cdr data))))
+    (loop for n from 0 below len
+          collect (sqrt (/ (reduce #'+ (mapcar #'(lambda (x) (expt (- x (elt col-means n)) 2)) (col n))) len))))))
+
+
+;;; Standardize the data. Take in a data set, a list of column-means, and a list of
+;;; column-stddev and return the data set modified as follows:
+;;;
+;;; x_i' = (x_i - mu_i) / stddev_i
+;;;
+(defun standardize (data cm cs)
+  (let ((pixel-vals (mapcar #'cdr data)))
+    (loop for activations in pixel-vals do
+         (loop for x across activations
+               for i below (length activations) do
+               (cond ((not (eq (elt cs i) 0))
+                      (setf (elt activations i) (/ (- x (elt cm i)) (elt cs i)))))))))
+
+
 ;;; Vector dot product takes 2 vectors as lists (x1 x2 ... xn), (y1 y2 ... yn)
 ;;; and makes a new list ((* x1 y1) (* x2 y2) ... (* xn yn)) and then returns
 ;;; the resulting sum of that new list. The values of the vectors are coerced
@@ -91,9 +128,6 @@
 																		(make-list n :initial-element (float range))))))
 
 
-;;; Standardizes the data to prevent an imbalance between features of different
-;;; scales. Returns the column value
-
 
 
 
@@ -109,10 +143,4 @@
  |        ))
  |    ))
  |#
-
-(defun running-stddev ()
-  (let ((sum 0) (sq 0) (n 0))
-    (lambda (x)
-      (incf sum x) (incf sq (* x x)) (incf n)
-      (/ (sqrt (- (* n sq) (* sum sum))) n))))
 
