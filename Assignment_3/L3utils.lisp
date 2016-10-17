@@ -45,9 +45,9 @@
 ;;;
 (defun column-stddev (data col-means)
   (let ((len (float (length (cdar data)))))
-  (flet ((col (i) (mapcar #'(lambda (row) (aref row i)) (mapcar #'cdr data))))
-    (loop for n from 0 below len
-          collect (sqrt (/ (reduce #'+ (mapcar #'(lambda (x) (expt (- x (elt col-means n)) 2)) (col n))) len))))))
+    (flet ((col (i) (mapcar #'(lambda (row) (aref row i)) (mapcar #'cdr data))))
+      (loop for n from 0 below len
+            collect (sqrt (/ (reduce #'+ (mapcar #'(lambda (x) (expt (- x (elt col-means n)) 2)) (col n))) len))))))
 
 
 ;;; Standardize the data. Take in a data set, a list of column-means, and a list of
@@ -58,10 +58,10 @@
 (defun standardize (data cm cs)
   (let ((pixel-vals (mapcar #'cdr data)))
     (loop for activations in pixel-vals do
-         (loop for x across activations
-               for i below (length activations) do
-               (cond ((not (eq (elt cs i) 0))
-                      (setf (elt activations i) (/ (- x (elt cm i)) (elt cs i)))))))))
+          (loop for x across activations
+                for i below (length activations) do
+                (cond ((not (eq (elt cs i) 0))
+                       (setf (elt activations i) (/ (- x (elt cm i)) (elt cs i)))))))))
 
 
 ;;; Vector dot product takes 2 vectors as lists (x1 x2 ... xn), (y1 y2 ... yn)
@@ -79,14 +79,14 @@
 ;;; #(num) => #(num)
 ;;;
 (defun transpose (a)
-	(let* ((m (array-dimension a 0))
-				 (n (array-dimension a 1))
-				 (b (make-array `(,n ,m) :initial-element 0)))
-		(loop for i from 0 below m do
-					(loop for j from 0 below n do
-								(setf (aref b j i)
-											(aref a i j))))
-		b))
+  (let* ((m (array-dimension a 0))
+         (n (array-dimension a 1))
+         (b (make-array `(,n ,m) :initial-element 0)))
+    (loop for i from 0 below m do
+          (loop for j from 0 below n do
+                (setf (aref b j i)
+                      (aref a i j))))
+    b))
 
 ;;; Multiply two matrices together. Note, this works for vectors, too, but the
 ;;; vectors must be a list of (a) list(s), e.g. '((1 2 3)) or '((1) (2) (3)). The
@@ -102,11 +102,11 @@
          (l (array-dimension b 1))
          (result (make-array `(,m ,l) :initial-element 0)))
     (loop for i from 0 below m do
-              (loop for k from 0 below l do
-                    (setf (aref result i k)
-                          (loop for j from 0 below n
-                                sum (* (aref a i j)
-                                       (aref b j k))))))
+          (loop for k from 0 below l do
+                (setf (aref result i k)
+                      (loop for j from 0 below n
+                            sum (* (aref a i j)
+                                   (aref b j k))))))
     result))
 
 
@@ -122,10 +122,10 @@
 ;;; (int int float) => ((float))
 ;;;
 (defun initialize-weight-vector (m n range)
-	(make-array `(,m ,n) :initial-contents
-							(loop for i from 1 to m
-										collect (mapcar (lambda (x) (- (random x) (/ range 2.0)))
-																		(make-list n :initial-element (float range))))))
+  (make-array `(,m ,n) :initial-contents
+              (loop for i from 1 to m
+                    collect (mapcar (lambda (x) (- (random x) (/ range 2.0)))
+                                    (make-list n :initial-element (float range))))))
 
 
 
