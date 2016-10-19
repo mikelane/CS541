@@ -23,8 +23,7 @@
                      ;; Pop the target value off the list and store it
                      (setf target (pop data))
                      ;; Make the data values a vector, append them to a list with target as the CAR
-                     (setf data (append `(,target) (eval (append '(vector) data)))))
-          )))
+                     (setf data (append `(,target) (eval (append '(vector) data))))))))
 
 
 ;;; Return the mean of the values over all columns as a list
@@ -82,6 +81,7 @@
   (let* ((m (array-dimension a 0))
          (n (array-dimension a 1))
          (b (make-array `(,n ,m) :initial-element 0)))
+    ;; Nothing too fancy, just walking over the matrix setting the appropriate values.
     (loop for i from 0 below m do
           (loop for j from 0 below n do
                 (setf (aref b j i)
@@ -101,6 +101,7 @@
          (n (array-dimension a 1))
          (l (array-dimension b 1))
          (result (make-array `(,m ,l) :initial-element 0)))
+    ;; Just a basic brute force algorithm.
     (loop for i from 0 below m do
           (loop for k from 0 below l do
                 (setf (aref result i k)
