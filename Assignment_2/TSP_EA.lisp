@@ -30,16 +30,13 @@
      :accessor city-y)))
 
 
-(defun randomize-circuit (circuit start-num)
-  (let ((index-of-start (position start-num circuit :test (lambda (x y) (eq x (city-num y))))))
-    ;; First get the start city to index 0
-    (rotatef (aref circuit index-of-start)
-             (aref circuit 0))
-    ;; Now do a Knuth shuffle for everything at index 1 and onwards
-    (loop for i from 1 below (1- *num-cities*) do
-          (rotatef (aref circuit i)
-                   (aref circuit (+ i (random (- *num-cities* i))))))
-    ))
+(defun randomize-circuit (circuit)
+  ;; Note that the start city has already been placed at index 0 so simply do a Knuth shuffle
+  ;; for everything at index 1 and onwards
+  (loop for i from 1 below (1- *num-cities*) do
+        (rotatef (aref circuit i)
+                 (aref circuit (+ i (random (- *num-cities* i))))))
+  )
 
 
 (defun calc-dist (circuit)
@@ -51,8 +48,7 @@
   ((cities
      :initform (randomize-circuit (make-array *num-cities*
                                               :element-type 'city
-                                              :initial-contents *city-array*)
-                                  *start-city*)
+                                              :initial-contents *city-array*))
      :accessor cities)
    (circuit-dist
      :initform (calc-dist ()))))
@@ -105,6 +101,11 @@
 
     ;; Read the last line of the data file and set the value of *start-city*
     (setf *start-city* (read-from-string (format nil "~d~%" (read-line input nil))))
+
+
+    ;; Go ahead and set the first index of *city-array* to be the start city
+    (rotatef (aref *city-array* (position *start-city* *city-array* :test (lambda (x y) (eq x (city-num y)))))
+             (aref *city-array* 0))
     ))
 
 ;;; Used for testing import-data function
@@ -197,6 +198,8 @@
 
 
 ;;; Define the necessary variables
-(defvar *num-cities* 0)
-(defvar *city-array* nil)
-(defvar *start-city* nil)
+#|
+ |(defvar *num-cities* 0)
+ |(defvar *city-array* nil)
+ |(defvar *start-city* nil)
+ |#
