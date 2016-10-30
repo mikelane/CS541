@@ -10,24 +10,6 @@
 
 
 ;;; Define the classes
-
-;; The circuit class. A circuit is a collection of cities, the total distance of
-;; the Hamiltonian path, and the fitness of that class
-(defclass circuit ()
-  ((cities
-     :initform nil
-     :initarg :cities
-     :accessor cities)
-   (circuit-dist
-     :initform 0
-     :initarg :circuit-dist
-     :accessor circuit-dist)
-   (circuit-fitness
-     :initform 0
-     :initarg :circuit-fitness
-     :accessor circuit-fitness)))
-
-
 ;; The city class. A city is an identifying number and an x and y coordinate on
 ;; a 200 x 200 grid.
 ;;
@@ -45,17 +27,6 @@
      :accessor city-y)))
 
 
-;;; Define the necessary variables
-(defvar *num-cities* 0)
-(defvar *city-array* nil)
-(defvar *start-city* nil)
-(defparameter *population-number* 100)
-(defvar *population* (make-array *population-number*
-                                 :element-type 'circuit
-                                 :fill-pointer 0
-                                 :initial-element nil))
-
-
 ;;; Class method for city that returns the euclidean distance between 2 cities
 ;;;
 (defmethod city-distance ((a city) (b city))
@@ -71,29 +42,35 @@
         ))
 
 
-;;; Take a circuit and randomize it but maintain the initial city in the ciruit
+;;; The circuit class. A circuit is a collection of cities, the total distance of
+;;; the Hamiltonian path, and the fitness of that class
 ;;;
-(defun randomize-circuit (circuit)
-  ;; Note that the start city has already been placed at index 0 so simply do a
-  ;; Knuth shuffle for everything at index 1 and onwards
-  (loop for i from 1 below (1- *num-cities*) do
-        (rotatef (aref circuit i)
-                 (aref circuit (+ i (random (- *num-cities* i)
-                                            (make-random-state t))))))
-  circuit)
+(defclass circuit ()
+  ((cities
+     :initform nil
+     :initarg :cities
+     :accessor cities)
+   (circuit-dist
+     :initform 0
+     :initarg :circuit-dist
+     :accessor circuit-dist)
+   (circuit-fitness
+     :initform 0
+     :initarg :circuit-fitness
+     :accessor circuit-fitness)))
 
 
 ;;; Wrapper function for city-dist. We need this wrapper since we have to add in
 ;;; the value of the distance from the last city to the start city
 ;;;
-(defun calc-dist (city-arr)
+(defmethod calc-dist ((a circuit))
   ;; If there is 0 or 2 cities, this should return nil
-  (cond ((< (length city-arr) 2) nil)
-        ((eq (length city-arr) 2) (* 2 (city-dist (aref city-arr 0)
-                                                  (aref city-arr 1))))
-        (t (+ (city-distance (aref city-arr 0)
-                             (aref city-arr (1- (length city-arr))))
-              (calc-dist-rec city-arr)))
+  (cond ((< (length (cities a)) 2) nil)
+        ((eq (length (cities a)) 2) (* 2 (city-dist (aref (cities a) 0)
+                                                    (aref (cities a) 1))))
+        (t (+ (city-distance (aref (cities a) 0)
+                             (aref (cities a) (1- (length (cities a)))))
+              (calc-dist-rec (cities a))))
         ))
 
 
@@ -113,31 +90,113 @@
         ))
 
 
-(defun calc-fitness (circuit-dist)
-  (cond ((eq 0 circuit-dist) nil)
-        (t (/ 1 circuit-dist))))
+;;; Set the circuit class's fitness.
+;;;
+(defmethod calc-fitness ((a circuit))
+  (cond ((eq 0 (circuit-dist a)) nil)
+        (t (/ 1 (circuit-dist a)))))
+
+
+;;; Make it so the circuit class initializes its distance and fitness
+;;; automatically when it is initialized
+;;;
+(defmethod initialize-instance :after ((a circuit) &key)
+  (setf (circuit-dist a) (calc-dist a))
+  (setf (circuit-fitness a) (calc-fitness a)))
+
+
+;;; Circuit class method for random mutation. Pick two random values and swap
+;;; the values at the index in the cities array
+;;;
+(defmethod circuit-mutate ((a circuit))
+  (rotatef (aref (cities a) (1+ (random (1- *num-cities*) (make-random-state t))))
+           (aref (cities a) (1+ (random (1- *num-cities*) (make-random-state t)))))
+  ;; We need to keep the distance and fitness up-to-date
+  (setf (circuit-dist a) (calc-dist a))
+  (setf (circuit-fitness a) (calc-fitness a)))
+
+
+;;; Define the necessary variables
+;;;
+(defvar *num-cities* 0)
+(defvar *city-array* nil)
+(defvar *start-city* nil)
+(defparameter *population-number* 10)
+(defparameter *percent-to-mutate* 20)
+(defvar *population*
+  (make-array *population-number*
+              :element-type 'circuit
+              :fill-pointer 0
+              :initial-element nil))
+(defvar *shortest* nil)
+
+
+;;; Circuit class method for crossover. Take two circuits, find a subsequence
+;;; from the first and place it in the child in the same location. Then for each
+;;; city from the 2nd that is not in the subsequence from the first, add that to
+;;; the child in the order it is found in the 2nd parent.
+;;;
+(defmethod circuit-crossover-mutate ((a circuit) (b circuit))
+  ;; Choose an i such that [0, *num-cities*)
+  (let ((i (random (1- *num-cities*) (make-random-state t)))
+        (j 0)
+        (y 0)
+        (result (make-array *num-cities*
+                            :element-type 'city
+                            :initial-element nil)))
+    ;; Generate a random value for j between 1 and the length of the list + 1
+    (setf j (1+ (+ (1+ i) (random (- *num-cities* (1+ i)) (make-random-state t)))))
+    ;; Assign the cities[i,j] to result[i,j]
+    (setf (subseq result i j) (subseq (cities a) i j))
+    ;; Set the b index to the position of the first nil
+    (setf y (position 'nil result))
+    ;; Loop over the cities of b
+    (loop for city across (cities b) do
+          ;; If the city under consideration is not already in the result,
+          (if (not (position city result))
+            ;; then set result at index y to the city
+            (setf (aref result y) city))
+          ;; Get the y index to the next nil value or nil if none are found
+          (setf y (position 'nil result)))
+    ;; Change the result into a circuit object
+    (setf result (make-instance 'circuit :cities result))
+    ;; Generate a random number and if it is less than the percentage to
+    ;; mutate hyperparameter, then mutate the result
+    (if (< (1+ (random 101 (make-random-state t)))
+           *percent-to-mutate*)
+      (circuit-mutate result))
+    ;; Now push that result onto the population
+    (vector-push result *population*)))
+
+
+;;; Take a circuit and randomize it but maintain the initial city in the ciruit
+;;;
+(defun randomize-circuit (circuit)
+  ;; Note that the start city has already been placed at index 0 so simply do a
+  ;; Knuth shuffle for everything at index 1 and onwards
+  (loop for i from 1 below (1- *num-cities*) do
+        (rotatef (aref circuit i)
+                 (aref circuit (+ i (random (- *num-cities* i)
+                                            (make-random-state t))))))
+  circuit)
 
 
 ;;; Initialize a vector of n randomized circuits. This is the initial population
 ;;; for the Genetic Algorithm.
 ;;;
 (defun initialize-population (n)
-  (let ((c nil))
-        ;(c-dist 0)
-        ;(c-fit 0))
-    (loop for i from 0 below n do
-          (setf c (randomize-circuit
-                    (make-array *num-cities*
-                                :element-type 'city
-                                :initial-contents *city-array*)))
-          (setf c-dist (calc-dist c))
-          (setf c-fit (calc-fitness c-dist))
-          (vector-push (make-instance 'circuit
-                                      :cities c
-                                      :circuit-dist c-dist
-                                      :circuit-fitness c-fit)
-                       *population*)
-          )))
+  (loop for i from 0 below n do
+        ;; Push the circuit instance onto the population
+        (vector-push
+          ;; Make an instance of a circuit with the randomized city circuit
+          (make-instance 'circuit
+                         :cities
+                         ;; Make a randomized city circuit
+                         (randomize-circuit
+                           (make-array *num-cities*
+                                       :element-type 'city
+                                       :initial-contents *city-array*)))
+          *population*)))
 
 
 ;;; Import the data from the file.
@@ -195,10 +254,12 @@
     ))
 
 
-;;; Select the x fittest individuals out of a list of individuals (those that
-;;; have the lowest distance)
+;;; Select the n best individuals and discard the rest.
 ;;;
-;(defun select-parents (x l) ())
+(defun select-parents (n)
+  (sort *population* #'> :key #'circuit-fitness)
+  (loop for i from 0 below (- (length *population*) n) do
+        (vector-pop *population*)))
 
 
 ;(defun run () ())
@@ -222,40 +283,104 @@
           (princ (format nil
                          " city number: ~d; coordinates: (~d,~d)~%"
                          (city-num city) (city-x city) (city-y city))))
-    (princ (format nil "~%Testing the circuit distance function"))
-    (princ (format nil "Total distance of that circuit is ~d~%" (calc-dist *city-array*)))
+
+    ;;;;;;;;;;;;;;;;;
+
     (princ (format nil "~%Test making an instance of a circuit~%"))
-    (defparameter *test-circuit*
+    (defvar *test-circuit*
       (let ((city-arr
               (randomize-circuit
                 (make-array *num-cities*
                             :element-type 'city
                             :initial-contents *city-array*))))
-        (defvar circ-dist (calc-dist city-arr))
-        (defvar circ-fitness (calc-fitness circ-dist))
-        (make-instance 'circuit
-                       :cities city-arr
-                       :circuit-dist circ-dist
-                       :circuit-fitness circ-fitness)
+        (make-instance 'circuit :cities city-arr)
         ))
+    (setf (circuit-dist *test-circuit*) (calc-dist *test-circuit*))
+    (setf (circuit-fitness *test-circuit*) (calc-fitness *test-circuit*))
     (princ (format nil "*test-circuit* is: ~s~%" *test-circuit*))
+    (princ (format nil "~%Testing the circuit distance function"))
     (princ (format nil "The city array in that circuit is:~%"))
     (loop for city across (cities *test-circuit*) do
           (princ (format nil
                          " city number: ~d; coordinates: (~d,~d)~%"
                          (city-num city) (city-x city) (city-y city))))
-    (princ (format nil "The circuit distance is ~s~%" (circuit-dist *test-circuit*)))
-    (princ (format nil "The circuit fitness is ~s~%" (circuit-fitness *test-circuit*)))
-    (princ (format nil "Test initializing a population:~%"))
-    (initialize-population 10)
-    (princ (format nil "An example of a 10-circuit population~%"))
+    (princ (format nil "The circuit distance is ~s~%" (calc-dist *test-circuit*)))
+    (princ (format nil "The circuit fitness is ~s~%" (calc-fitness *test-circuit*)))
+
+    ;;;;;;;;;;;;;;;;;
+
+    (princ (format nil "~%Test initializing a population:~%"))
+    (initialize-population *population-number*)
+    (princ (format nil "An example of a ~d-circuit population~%" *population-number*))
     (loop for circuit across *population*
-          for i from 0 below 10 do
-          (princ (format nil "index ~d: " i))
+          for i from 0 below *population-number* do
+          (princ (format nil "index ~d:" i))
           (loop for city across (cities circuit) do
                 (princ (format nil "~d " (city-num city))))
           (princ (format nil
-                         "d:~7$ f:~7$"
+                         "  d:~7$ f:~7$"
+                         (circuit-dist circuit)
+                         (circuit-fitness circuit)))
+          (princ (format nil "~%")))
+
+    ;;;;;;;;;;;;;;;;;
+
+    (princ (format nil "~%Test random mutation for all circuits in population~%"))
+    (loop for circuit across *population* do
+          (circuit-mutate circuit))
+    (princ (format nil "The new values of the population:~%"))
+    (loop for circuit across *population*
+          for i from 0 below *population-number* do
+          (princ (format nil "index ~d:" i))
+          (loop for city across (cities circuit) do
+                (princ (format nil "~d " (city-num city))))
+          (princ (format nil
+                         "  d:~7$ f:~7$"
+                         (circuit-dist circuit)
+                         (circuit-fitness circuit)))
+          (princ (format nil "~%")))
+
+    ;;;;;;;;;;;;;;;;;
+
+    (princ (format nil "~%Test selecting the population without removing any~%"))
+    (select-parents *population-number*)
+    (loop for circuit across *population*
+          for i from 0 below *population-number* do
+          (princ (format nil "index ~d:" i))
+          (loop for city across (cities circuit) do
+                (princ (format nil "~d " (city-num city))))
+          (princ (format nil
+                         "  d:~7$ f:~7$"
+                         (circuit-dist circuit)
+                         (circuit-fitness circuit)))
+          (princ (format nil "~%")))
+
+    ;;;;;;;;;;;;;;;;;
+
+    (princ (format nil "~%Test selecting the population without removing all but 2~%"))
+    (select-parents 2)
+    (loop for circuit across *population*
+          for i from 0 below *population-number* do
+          (princ (format nil "index ~d:" i))
+          (loop for city across (cities circuit) do
+                (princ (format nil "~d " (city-num city))))
+          (princ (format nil
+                         "  d:~7$ f:~7$"
+                         (circuit-dist circuit)
+                         (circuit-fitness circuit)))
+          (princ (format nil "~%")))
+
+    ;;;;;;;;;;;;;;;;;
+
+    (princ (format nil "~%Test crossover/mutation~%"))
+    (circuit-crossover-mutate (aref *population* 0) (aref *population* 1))
+    (loop for circuit across *population*
+          for i from 0 below *population-number* do
+          (princ (format nil "index ~d:" i))
+          (loop for city across (cities circuit) do
+                (princ (format nil "~d " (city-num city))))
+          (princ (format nil
+                         "  d:~7$ f:~7$"
                          (circuit-dist circuit)
                          (circuit-fitness circuit)))
           (princ (format nil "~%")))
