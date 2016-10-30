@@ -119,20 +119,52 @@
   (setf (circuit-fitness a) (calc-fitness a)))
 
 
+;;; Print the information about a circuit:
+(defmethod circuit-print ((a circuit))
+  (loop for city across (cities a)
+        for i from 1 to *num-cities* do
+        (princ (format nil
+                       " ~d: city: ~d location: (~d,~d)~%"
+                       i (city-num city) (city-x city) (city-y city))))
+  (princ (format nil
+                 " ~d: city: ~d location: (~d,~d)~%"
+                 (1+ *num-cities*)
+                 (city-num (aref (cities a) 0))
+                 (city-x (aref (cities a) 0))
+                 (city-y (aref (cities a) 0))))
+  (princ (format nil "The circuit distance is ~s~%" (calc-dist a)))
+  (princ (format nil "The circuit fitness is ~s~%" (calc-fitness a))))
+
+
+;;; Genetic algorithm Hyperparameters
+;;;
+(defparameter *population-number* 200)
+(defparameter *percentage-elite* 20)
+(defparameter *percent-to-mutate* 5)
+(defparameter *number-of-generations* 750)
+(defvar *max-unchanged-generations-allowed* 300)
+
+
+
 ;;; Define the necessary variables
 ;;;
 (defvar *num-cities* 0)
 (defvar *city-array* nil)
 (defvar *start-city* nil)
-(defvar *sum-of-fitness* 0)
-(defparameter *population-number* 10)
-(defparameter *percent-to-mutate* 20)
 (defvar *population*
   (make-array *population-number*
               :element-type 'circuit
               :fill-pointer 0
               :initial-element nil))
-(defvar *shortest* nil)
+(defvar *fittest-individual* nil)
+(defvar *unchanged-fittest-count* *max-unchanged-generations-allowed*)
+(defvar *output-filename*
+  (pathname
+    (format nil
+            "output/TSP_GA_OUT_~d.data"
+            (get-universal-time))))
+
+
 
 
 ;;; Circuit class method for crossover. Take two circuits, find a subsequence
@@ -163,9 +195,10 @@
           ;; If the city under consideration is not already in the result,
           (if (not (position city result))
             ;; then set result at index y to the city
-            (setf (aref result y) city))
-          ;; Get the y index to the next nil value or nil if none are found
-          (setf y (position 'nil result)))
+            (progn (setf (aref result y) city)
+                   ;; update the y index to the next nil value or nil if none
+                   ;; are found
+                   (setf y (position 'nil result)))))
 
     ;; Change the result into a circuit object
     (setf result (make-instance 'circuit :cities result))
@@ -208,6 +241,102 @@
                                        :element-type 'city
                                        :initial-contents *city-array*)))
           *population*)))
+
+
+;;; Print a human-readable version of the current population. Useful for
+;;; testing purposes.
+;;;
+(defun print-population ()
+  (loop for circuit across *population*
+        for i from 0 below *population-number* do
+        (princ (format nil "index ~d:" i))
+        (loop for city across (cities circuit) do
+              (princ (format nil "~d " (city-num city))))
+        (princ (format nil
+                       "  d:~7$ f:~7$"
+                       (circuit-dist circuit)
+                       (circuit-fitness circuit)))
+        (princ (format nil "~%"))))
+
+
+;;; Select the elite population. Sort the population by fitness in descending
+;;; order then use the *percentage-elite* hyperparameter to determine how many
+;;; elite individuals to keep. Discard unkept individuals.
+;;;
+;;; Return the current location of the fill pointer
+;;;
+(defun select-parents ()
+  (let ((n (floor (* (/ *percentage-elite* 100) *population-number*))))
+    (sort *population* #'> :key #'circuit-fitness)
+    (loop for i from 0 below (- (length *population*) n) do
+          (vector-pop *population*))
+    ;; After selecting parents, update the *fittest-individual* if required
+    (if (or
+          (eq nil *fittest-individual*)
+          (< (circuit-fitness *fittest-individual*)
+             (circuit-fitness (aref *population* 0))))
+      (progn (setf *fittest-individual*
+                   (aref *population* 0))
+             ;; Output the details of the new fittest individual
+             (princ (format nil
+                            "Current Fittest Individual:~%    tour:~s~%    dist:~5$ fitness:~9$~%"
+                            (append (loop for city across (cities *fittest-individual*)
+                                          collect (city-num city))
+                                    `(,(city-num (aref (cities *fittest-individual*) 0))))
+                            (circuit-dist *fittest-individual*)
+                            (circuit-fitness *fittest-individual*)))
+             (setf *unchanged-fittest-count* *max-unchanged-generations-allowed*))
+      ;; else, decrement the *unchanged-fittest-count* counter
+      (decf *unchanged-fittest-count*))
+
+    ;;; Write the data to the file for fun graphing later
+    (with-open-file (stream
+                      (ensure-directories-exist
+                        *output-filename*)
+                      :direction :output
+                      :if-does-not-exist :create
+                      :if-exists :append)
+      (format stream
+              "~s ~7$ ~7$~%"
+              (append (loop for city across (cities *fittest-individual*)
+                            collect (city-num city))
+                      `(,(city-num (aref (cities *fittest-individual*) 0))))
+              (circuit-dist *fittest-individual*)
+              (circuit-fitness *fittest-individual*)))
+
+    ;; Return the current location of the fill pointer
+    (fill-pointer *population*)))
+
+
+;;; Replace the population. This method follows the algorithm of MMEVCA:
+;;; 1) The fitness of the *population-number* individuals is computed
+;;; 2) The population is sorted in descending order of fitness
+;;; 3) The *percent-to-mutate* variable is used to determine the percent of the
+;;;    highest fitness ("elite") individuals which are copied to the next
+;;;    generation unmodified.
+;;; 4) The remaining individuals are formed by single-point crossovers between
+;;;    randomly chosen (with replacement) pairs of elite individuals. In
+;;;    addition, *percent-to-mutate*
+;;;
+(defun replace-population ()
+  ;; Get the location of the current fill pointer (which also selects the elites)
+  (let ((current (select-parents)))
+    ;; Fill the rest of the *population* vector with new individuals
+    (loop for i from current below *population-number* do
+            (circuit-crossover-mutate
+              (aref *population* (random current (make-random-state t)))
+              (aref *population* (random current (make-random-state t)))))
+    ))
+
+
+;;; Evolve the population. Keep evolving the population until the max number of
+;;; generations has been reached or the max number of allowed generations
+;;; without a change in the fittest individual occurs.
+;;;
+(defun evolve ()
+  (loop for i from 0 below *number-of-generations*
+        while (> *unchanged-fittest-count* 0) do
+        (replace-population)))
 
 
 ;;; Import the data from the file.
@@ -265,30 +394,22 @@
     ))
 
 
-;;; Select the n best individuals and discard the rest. Also sets the
-;;; *sum-of-fitness* value
-;;;
-(defun select-parents (n)
-  (sort *population* #'> :key #'circuit-fitness)
-  (loop for i from 0 below (- (length *population*) n) do
-        (vector-pop *population*))
-  (setf *sum-of-fitness* (reduce #'+ *population*)))
+(defun run (filename)
+  (princ (format nil "Importing data ..."))
+  (import-data filename)
+  (princ (format nil " DONE"))
 
+  (princ (format nil "~%Initializing Population ..."))
+  (initialize-population *population-number*)
+  (princ (format nil " DONE"))
 
-;;; Assign weights to the population. This will be a wrapper to assign weights
-;;; to the individuals of the population
-;;;
-(defun assign-weights ()
-  (loop for city across *population* do
-        ))
+  (princ (format nil "~%Evolving population ..."))
+  (evolve)
+  (princ (format nil "DONE"))
 
-
-;;; Choose the mating pair. This utilizes the *sum-of-fitness* value. The
-;;; probability that a given individual will be selected is
-;;; fitness / *sum-of-fitness*. 
-
-
-;(defun run () ())
+  (princ (format nil "~%~%Shortest Circuit:~%"))
+  (circuit-print *fittest-individual*)
+  )
 
 
 (defun run-tests ()
@@ -321,96 +442,61 @@
                             :initial-contents *city-array*))))
         (make-instance 'circuit :cities city-arr)
         ))
-    (setf (circuit-dist *test-circuit*) (calc-dist *test-circuit*))
-    (setf (circuit-fitness *test-circuit*) (calc-fitness *test-circuit*))
     (princ (format nil "*test-circuit* is: ~s~%" *test-circuit*))
     (princ (format nil "~%Testing the circuit distance function"))
     (princ (format nil "The city array in that circuit is:~%"))
-    (loop for city across (cities *test-circuit*) do
-          (princ (format nil
-                         " city number: ~d; coordinates: (~d,~d)~%"
-                         (city-num city) (city-x city) (city-y city))))
-    (princ (format nil "The circuit distance is ~s~%" (calc-dist *test-circuit*)))
-    (princ (format nil "The circuit fitness is ~s~%" (calc-fitness *test-circuit*)))
+    (circuit-print *test-circuit*)
 
     ;;;;;;;;;;;;;;;;;
 
     (princ (format nil "~%Test initializing a population:~%"))
     (initialize-population *population-number*)
-    (princ (format nil "An example of a ~d-circuit population~%" *population-number*))
-    (loop for circuit across *population*
-          for i from 0 below *population-number* do
-          (princ (format nil "index ~d:" i))
-          (loop for city across (cities circuit) do
-                (princ (format nil "~d " (city-num city))))
-          (princ (format nil
-                         "  d:~7$ f:~7$"
-                         (circuit-dist circuit)
-                         (circuit-fitness circuit)))
-          (princ (format nil "~%")))
+    (print-population)
 
-    ;;;;;;;;;;;;;;;;;
+    ;;; Removed in lieu of testing replace-population()
+#|
+ |    (princ (format nil "~%Test random mutation for all circuits in population~%"))
+ |    (loop for circuit across *population* do
+ |          (circuit-mutate circuit))
+ |    (princ (format nil "The new values of the population:~%"))
+ |    (print-population)
+ |
+ |    (princ (format nil "~%Test selecting the population without removing any~%"))
+ |    (select-parents)
+ |    (print-population)
+ |
+ |    (princ (format nil "~%Test selecting the population without removing all but 2~%"))
+ |    (select-parents)
+ |    (print-population)
+ |
+ |    (princ (format nil "~%Test crossover/mutation~%"))
+ |    (circuit-crossover-mutate (aref *population* 0) (aref *population* 1))
+ |    (print-population)
+ |#
 
-    (princ (format nil "~%Test random mutation for all circuits in population~%"))
-    (loop for circuit across *population* do
-          (circuit-mutate circuit))
-    (princ (format nil "The new values of the population:~%"))
-    (loop for circuit across *population*
-          for i from 0 below *population-number* do
-          (princ (format nil "index ~d:" i))
-          (loop for city across (cities circuit) do
-                (princ (format nil "~d " (city-num city))))
-          (princ (format nil
-                         "  d:~7$ f:~7$"
-                         (circuit-dist circuit)
-                         (circuit-fitness circuit)))
-          (princ (format nil "~%")))
+    ;;; Removed in favor of testing the run function
+#|
+ |    (princ (format nil "~%Test replace_population:~%"))
+ |    (replace-population)
+ |    (princ (format nil "Population after calling replace-population:~%"))
+ |    (print-population)
+ |
+ |    (princ (format nil "~%Test replace-population 100 times:~%"))
+ |    (loop for i from 0 below 100 do
+ |          (replace-population))
+ |    (princ (format nil "Population after calling replace-population 100 times:~%"))
+ |    (print-population)
+ |
+ |    (princ (format nil "~%Test printing the information about the fittest individual:~%"))
+ |    (circuit-print *fittest-individual*)
+ |#
 
-    ;;;;;;;;;;;;;;;;;
-
-    (princ (format nil "~%Test selecting the population without removing any~%"))
-    (select-parents *population-number*)
-    (loop for circuit across *population*
-          for i from 0 below *population-number* do
-          (princ (format nil "index ~d:" i))
-          (loop for city across (cities circuit) do
-                (princ (format nil "~d " (city-num city))))
-          (princ (format nil
-                         "  d:~7$ f:~7$"
-                         (circuit-dist circuit)
-                         (circuit-fitness circuit)))
-          (princ (format nil "~%")))
-
-    ;;;;;;;;;;;;;;;;;
-
-    (princ (format nil "~%Test selecting the population without removing all but 2~%"))
-    (select-parents 2)
-    (loop for circuit across *population*
-          for i from 0 below *population-number* do
-          (princ (format nil "index ~d:" i))
-          (loop for city across (cities circuit) do
-                (princ (format nil "~d " (city-num city))))
-          (princ (format nil
-                         "  d:~7$ f:~7$"
-                         (circuit-dist circuit)
-                         (circuit-fitness circuit)))
-          (princ (format nil "~%")))
-
-    ;;;;;;;;;;;;;;;;;
-
-    (princ (format nil "~%Test crossover/mutation~%"))
-    (circuit-crossover-mutate (aref *population* 0) (aref *population* 1))
-    (loop for circuit across *population*
-          for i from 0 below *population-number* do
-          (princ (format nil "index ~d:" i))
-          (loop for city across (cities circuit) do
-                (princ (format nil "~d " (city-num city))))
-          (princ (format nil
-                         "  d:~7$ f:~7$"
-                         (circuit-dist circuit)
-                         (circuit-fitness circuit)))
-          (princ (format nil "~%")))
     ))
 
 
-(run-tests)
+#|
+ |(run-tests)
+ |#
+
+(run "test.txt")
+
