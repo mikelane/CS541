@@ -142,7 +142,7 @@
 (defparameter *percentage-elite* 20)
 (defparameter *percent-to-mutate* 5)
 (defparameter *number-of-generations* 750)
-(defvar *max-unchanged-generations-allowed* 300)
+(defparameter *max-unchanged-generations-allowed* 300)
 
 
 
@@ -394,7 +394,24 @@
     ))
 
 
+;;; Run the program with all the inputs.
+;;;
 (defun run (filename)
+  (princ (format nil
+                 "
+Hyperparameters:
+    *population-number*: ~d
+    *percentage-elite*: ~d
+    *percent-to-mutate*: ~d
+    *number-of-generations*: ~d
+    *max-unchanged-generations-allowed*: ~d
+
+"
+                 *population-number*
+                 *percentage-elite*
+                 *percent-to-mutate*
+                 *number-of-generations*
+                 *max-unchanged-generations-allowed*))
   (princ (format nil "Importing data ..."))
   (import-data filename)
   (princ (format nil " DONE"))
@@ -498,5 +515,65 @@
  |(run-tests)
  |#
 
-(run "test.txt")
+#|
+ |(run "test.txt")
+ |#
+
+;;; Output a helpful CLI message
+(defun print-help-message ()
+  (princ
+"
+usage: clisp TSP_EA.lisp filename [option value]
+
+REQUIRED
+  filename: filename of the data file for the TSP
+
+OPTIONAL: You can include a series of option value pairs after the filename in
+          order to set the values of the hyperparameters. The option and values
+          are described below.
+
+
+  The available hyperparameters are:
+
+    hyperparameter                      |  value  |  Command line option
+  ------------------------------------------------------------------------
+    *population-number*                 |  200    |  popnum
+    *percentage-elite*                  |  20     |  eliteperc
+    *percent-to-mutate*                 |  5      |  mutateperc
+    *number-of-generations*             |  750    |  gennum
+    *max-unchanged-generations-allowed* |  300    |  maxunch
+
+
+ example: clisp TSP_EA.lisp test.txt popnum 100 mutateperc 10 maxunch 100
+
+"))
+
+
+(defun parse-command-line-and-run ()
+  (let ((filename (pop ext:*args*))
+        (option nil)
+        (value nil))
+    (if (eq filename nil)
+      (progn (print-help-message)
+             (ext:exit 1)))
+    (princ (format nil "Running Genetic Algorithm. Data file: ~s~%" filename))
+    (loop while ext:*args* do
+          (setf option (pop ext:*args*))
+          (setf value (handler-case
+                        (parse-integer (pop ext:*args*))
+                        (error (c))))
+          (cond ((and value (string= option "popnum"))
+                 (setf *population-number* value))
+                ((and value (string= option "eliteperc"))
+                 (setf *percentage-elite* value))
+                ((and value (string= option "mutateperc"))
+                 (setf *percent-to-mutate* value))
+                ((and value (string= option "gennum"))
+                 (setf *number-of-generations* value))
+                ((and value (string= option "maxunch"))
+                 (setf *max-unchanged-generations-allowed* value)))
+          )
+    (run filename)))
+
+(parse-command-line-and-run)
 
