@@ -42,6 +42,10 @@
         ))
 
 
+
+
+
+
 ;;; The circuit class. A circuit is a collection of cities, the total distance of
 ;;; the Hamiltonian path, and the fitness of that class
 ;;;
@@ -136,6 +140,9 @@
   (princ (format nil "The circuit fitness is ~s~%" (calc-fitness a))))
 
 
+
+
+
 ;;; Genetic algorithm Hyperparameters
 ;;;
 (defparameter *population-number* 100)
@@ -163,6 +170,9 @@
     (format nil
             "output/TSP_GA_OUT_~d.data"
             (get-universal-time))))
+
+
+
 
 
 
@@ -213,6 +223,8 @@
     (vector-push result *population*)))
 
 
+
+
 ;;; Take a circuit and randomize it but maintain the initial city in the ciruit
 ;;;
 (defun randomize-circuit (circuit)
@@ -223,6 +235,8 @@
                  (aref circuit (+ i (random (- *num-cities* i)
                                             (make-random-state t))))))
   circuit)
+
+
 
 
 ;;; Initialize a vector of n randomized circuits. This is the initial population
@@ -243,6 +257,8 @@
           *population*)))
 
 
+
+
 ;;; Print a human-readable version of the current population. Useful for
 ;;; testing purposes.
 ;;;
@@ -257,6 +273,8 @@
                        (circuit-dist circuit)
                        (circuit-fitness circuit)))
         (princ (format nil "~%"))))
+
+
 
 
 ;;; Select the elite population. Sort the population by fitness in descending
@@ -308,6 +326,8 @@
     (fill-pointer *population*)))
 
 
+
+
 ;;; Replace the population. This method follows the algorithm of MMEVCA:
 ;;; 1) The fitness of the *population-number* individuals is computed
 ;;; 2) The population is sorted in descending order of fitness
@@ -329,6 +349,8 @@
     ))
 
 
+
+
 ;;; Evolve the population. Keep evolving the population until the max number of
 ;;; generations has been reached or the max number of allowed generations
 ;;; without a change in the fittest individual occurs.
@@ -337,6 +359,8 @@
   (loop for i from 0 below *number-of-generations*
         while (> *unchanged-fittest-count* 0) do
         (replace-population)))
+
+
 
 
 ;;; Import the data from the file.
@@ -394,6 +418,8 @@
     ))
 
 
+
+
 ;;; Run the program with all the inputs.
 ;;;
 (defun run (filename)
@@ -429,95 +455,92 @@ Hyperparameters:
   )
 
 
-(defun run-tests ()
-  (let ((filename "test.txt"))
-    (princ (format nil "Test importing from ~s~%" filename))
-    (import-data filename)
-    (princ (format nil "~%Did it work?~%"))
-    (princ (format nil "The file contents are:~%"))
-    (with-open-file (stream filename)
-      (loop for line = (read-line stream nil 'end)
-            until (eq line 'end)
-            do (princ (format nil ">>> ~d~%" line))))
-    (princ (format nil "~%The stored values are:~%"))
-    (princ (format nil "*num-cities* is ~d~%" *num-cities*))
-    (princ (format nil "*start-city* is ~d~%" *start-city*))
-    (princ (format nil "*city-array* is:~%"))
-    (loop for city across *city-array* do
-          (princ (format nil
-                         " city number: ~d; coordinates: (~d,~d)~%"
-                         (city-num city) (city-x city) (city-y city))))
-
-    ;;;;;;;;;;;;;;;;;
-
-    (princ (format nil "~%Test making an instance of a circuit~%"))
-    (defvar *test-circuit*
-      (let ((city-arr
-              (randomize-circuit
-                (make-array *num-cities*
-                            :element-type 'city
-                            :initial-contents *city-array*))))
-        (make-instance 'circuit :cities city-arr)
-        ))
-    (princ (format nil "*test-circuit* is: ~s~%" *test-circuit*))
-    (princ (format nil "~%Testing the circuit distance function"))
-    (princ (format nil "The city array in that circuit is:~%"))
-    (circuit-print *test-circuit*)
-
-    ;;;;;;;;;;;;;;;;;
-
-    (princ (format nil "~%Test initializing a population:~%"))
-    (initialize-population *population-number*)
-    (print-population)
-
-    ;;; Removed in lieu of testing replace-population()
-#|
- |    (princ (format nil "~%Test random mutation for all circuits in population~%"))
- |    (loop for circuit across *population* do
- |          (circuit-mutate circuit))
- |    (princ (format nil "The new values of the population:~%"))
- |    (print-population)
- |
- |    (princ (format nil "~%Test selecting the population without removing any~%"))
- |    (select-parents)
- |    (print-population)
- |
- |    (princ (format nil "~%Test selecting the population without removing all but 2~%"))
- |    (select-parents)
- |    (print-population)
- |
- |    (princ (format nil "~%Test crossover/mutation~%"))
- |    (circuit-crossover-mutate (aref *population* 0) (aref *population* 1))
- |    (print-population)
- |#
-
-    ;;; Removed in favor of testing the run function
-#|
- |    (princ (format nil "~%Test replace_population:~%"))
- |    (replace-population)
- |    (princ (format nil "Population after calling replace-population:~%"))
- |    (print-population)
- |
- |    (princ (format nil "~%Test replace-population 100 times:~%"))
- |    (loop for i from 0 below 100 do
- |          (replace-population))
- |    (princ (format nil "Population after calling replace-population 100 times:~%"))
- |    (print-population)
- |
- |    (princ (format nil "~%Test printing the information about the fittest individual:~%"))
- |    (circuit-print *fittest-individual*)
- |#
-
-    ))
 
 
 #|
- |(run-tests)
+ |;;; Run tests of the various functionality
+ |;;;
+ |(defun run-tests ()
+ |  (let ((filename "test.txt"))
+ |    (princ (format nil "Test importing from ~s~%" filename))
+ |    (import-data filename)
+ |    (princ (format nil "~%Did it work?~%"))
+ |    (princ (format nil "The file contents are:~%"))
+ |    (with-open-file (stream filename)
+ |      (loop for line = (read-line stream nil 'end)
+ |            until (eq line 'end)
+ |            do (princ (format nil ">>> ~d~%" line))))
+ |    (princ (format nil "~%The stored values are:~%"))
+ |    (princ (format nil "*num-cities* is ~d~%" *num-cities*))
+ |    (princ (format nil "*start-city* is ~d~%" *start-city*))
+ |    (princ (format nil "*city-array* is:~%"))
+ |    (loop for city across *city-array* do
+ |          (princ (format nil
+ |                         " city number: ~d; coordinates: (~d,~d)~%"
+ |                         (city-num city) (city-x city) (city-y city))))
+ |
+ |    ;;;;;;;;;;;;;;;;
+ |
+ |    (princ (format nil "~%Test making an instance of a circuit~%"))
+ |    (defvar *test-circuit*
+ |      (let ((city-arr
+ |              (randomize-circuit
+ |                (make-array *num-cities*
+ |                            :element-type 'city
+ |                            :initial-contents *city-array*))))
+ |        (make-instance 'circuit :cities city-arr)
+ |        ))
+ |    (princ (format nil "*test-circuit* is: ~s~%" *test-circuit*))
+ |    (princ (format nil "~%Testing the circuit distance function"))
+ |    (princ (format nil "The city array in that circuit is:~%"))
+ |    (circuit-print *test-circuit*)
+ |
+ |    ;;;;;;;;;;;;;;;;
+ |
+ |    (princ (format nil "~%Test initializing a population:~%"))
+ |    (initialize-population *population-number*)
+ |    (print-population)
+ |
+ |    ;; Removed in lieu of testing replace-population()
+ |    ;(princ (format nil "~%Test random mutation for all circuits in population~%"))
+ |    ;(loop for circuit across *population* do
+ |          ;(circuit-mutate circuit))
+ |    ;(princ (format nil "The new values of the population:~%"))
+ |    ;(print-population)
+ |
+ |    ;(princ (format nil "~%Test selecting the population without removing any~%"))
+ |    ;(select-parents)
+ |    ;(print-population)
+ |
+ |    ;(princ (format nil "~%Test selecting the population without removing all but 2~%"))
+ |    ;(select-parents)
+ |    ;(print-population)
+ |
+ |    ;(princ (format nil "~%Test crossover/mutation~%"))
+ |    ;(circuit-crossover-mutate (aref *population* 0) (aref *population* 1))
+ |    ;(print-population)
+ |
+ |    ;; Removed in favor of testing the run function
+ |    ;(princ (format nil "~%Test replace_population:~%"))
+ |    ;(replace-population)
+ |    ;(princ (format nil "Population after calling replace-population:~%"))
+ |    ;(print-population)
+ |
+ |    ;(princ (format nil "~%Test replace-population 100 times:~%"))
+ |    ;(loop for i from 0 below 100 do
+ |          ;(replace-population))
+ |    ;(princ (format nil "Population after calling replace-population 100 times:~%"))
+ |    ;(print-population)
+ |
+ |    ;(princ (format nil "~%Test printing the information about the fittest individual:~%"))
+ |    ;(circuit-print *fittest-individual*)
+ |
+ |    ))
  |#
 
-#|
- |(run "test.txt")
- |#
+
+
+
 
 ;;; Output a helpful CLI message
 (defun print-help-message ()
@@ -549,19 +572,29 @@ OPTIONAL: You can include a series of option value pairs after the filename in
 "))
 
 
+
+
+;;; Parse the command line args and run the algorithm
+;;;
 (defun parse-command-line-and-run ()
+  ;; Pop the filename from the args list
   (let ((filename (pop ext:*args*))
         (option nil)
         (value nil))
+    ;; If there wasn't a filename, exit
     (if (eq filename nil)
       (progn (print-help-message)
-             (ext:exit 1)))
-    (princ (format nil "Running Genetic Algorithm. Data file: ~s~%" filename))
+             (ext:exit 1))
+      ;; otherwise, make the filename a pathname
+      (progn (princ (format nil "Running Genetic Algorithm. Data file: ~s~%" filename))
+             (setf filename (pathname filename))))
+
     (loop while ext:*args* do
           (setf option (pop ext:*args*))
           (setf value (handler-case
                         (parse-integer (pop ext:*args*))
-                        (error (c))))
+                        (error (c)
+                               (princ (format nil "~s~%" c)))))
           (cond ((and value (string= option "popnum"))
                  (setf *population-number* value))
                 ((and value (string= option "eliteperc"))
@@ -571,8 +604,9 @@ OPTIONAL: You can include a series of option value pairs after the filename in
                 ((and value (string= option "gennum"))
                  (setf *number-of-generations* value))
                 ((and value (string= option "maxunch"))
-                 (setf *max-unchanged-generations-allowed* value)))
-          )
+                 (setf *max-unchanged-generations-allowed* value))
+                ))
+
     (run filename)))
 
 (parse-command-line-and-run)
