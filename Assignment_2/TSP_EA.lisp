@@ -57,7 +57,10 @@
    (circuit-fitness
      :initform 0
      :initarg :circuit-fitness
-     :accessor circuit-fitness)))
+     :accessor circuit-fitness)
+   (circuit-weight
+     :initform 0
+     :accessor circuit-weight)))
 
 
 ;;; Wrapper function for city-dist. We need this wrapper since we have to add in
@@ -121,6 +124,7 @@
 (defvar *num-cities* 0)
 (defvar *city-array* nil)
 (defvar *start-city* nil)
+(defvar *sum-of-fitness* 0)
 (defparameter *population-number* 10)
 (defparameter *percent-to-mutate* 20)
 (defvar *population*
@@ -144,12 +148,16 @@
         (result (make-array *num-cities*
                             :element-type 'city
                             :initial-element nil)))
+
     ;; Generate a random value for j between 1 and the length of the list + 1
     (setf j (1+ (+ (1+ i) (random (- *num-cities* (1+ i)) (make-random-state t)))))
+
     ;; Assign the cities[i,j] to result[i,j]
     (setf (subseq result i j) (subseq (cities a) i j))
+
     ;; Set the b index to the position of the first nil
     (setf y (position 'nil result))
+
     ;; Loop over the cities of b
     (loop for city across (cities b) do
           ;; If the city under consideration is not already in the result,
@@ -158,13 +166,16 @@
             (setf (aref result y) city))
           ;; Get the y index to the next nil value or nil if none are found
           (setf y (position 'nil result)))
+
     ;; Change the result into a circuit object
     (setf result (make-instance 'circuit :cities result))
+
     ;; Generate a random number and if it is less than the percentage to
     ;; mutate hyperparameter, then mutate the result
     (if (< (1+ (random 101 (make-random-state t)))
            *percent-to-mutate*)
       (circuit-mutate result))
+
     ;; Now push that result onto the population
     (vector-push result *population*)))
 
@@ -254,12 +265,27 @@
     ))
 
 
-;;; Select the n best individuals and discard the rest.
+;;; Select the n best individuals and discard the rest. Also sets the
+;;; *sum-of-fitness* value
 ;;;
 (defun select-parents (n)
   (sort *population* #'> :key #'circuit-fitness)
   (loop for i from 0 below (- (length *population*) n) do
-        (vector-pop *population*)))
+        (vector-pop *population*))
+  (setf *sum-of-fitness* (reduce #'+ *population*)))
+
+
+;;; Assign weights to the population. This will be a wrapper to assign weights
+;;; to the individuals of the population
+;;;
+(defun assign-weights ()
+  (loop for city across *population* do
+        ))
+
+
+;;; Choose the mating pair. This utilizes the *sum-of-fitness* value. The
+;;; probability that a given individual will be selected is
+;;; fitness / *sum-of-fitness*. 
 
 
 ;(defun run () ())
