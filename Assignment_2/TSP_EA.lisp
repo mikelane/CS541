@@ -138,11 +138,11 @@
 
 ;;; Genetic algorithm Hyperparameters
 ;;;
-(defparameter *population-number* 200)
+(defparameter *population-number* 100)
 (defparameter *percentage-elite* 20)
 (defparameter *percent-to-mutate* 5)
-(defparameter *number-of-generations* 750)
-(defparameter *max-unchanged-generations-allowed* 300)
+(defparameter *number-of-generations* 100)
+(defparameter *max-unchanged-generations-allowed* 100)
 
 
 
@@ -537,11 +537,11 @@ OPTIONAL: You can include a series of option value pairs after the filename in
 
     hyperparameter                      |  value  |  Command line option
   ------------------------------------------------------------------------
-    *population-number*                 |  200    |  popnum
+    *population-number*                 |  100    |  popnum
     *percentage-elite*                  |  20     |  eliteperc
     *percent-to-mutate*                 |  5      |  mutateperc
-    *number-of-generations*             |  750    |  gennum
-    *max-unchanged-generations-allowed* |  300    |  maxunch
+    *number-of-generations*             |  100    |  gennum
+    *max-unchanged-generations-allowed* |  100    |  maxunch
 
 
  example: clisp TSP_EA.lisp test.txt popnum 100 mutateperc 10 maxunch 100
