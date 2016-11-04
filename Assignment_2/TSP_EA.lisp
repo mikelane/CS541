@@ -582,7 +582,9 @@ OPTIONAL: You can include a series of option value pairs after the filename in
         (option nil)
         (value nil))
     ;; If there wasn't a filename, exit
-    (if (eq filename nil)
+    (if (or
+          (eq filename nil)
+          (string= filename "help"))
       (progn (print-help-message)
              (ext:exit 1))
       ;; otherwise, make the filename a pathname
@@ -610,4 +612,3 @@ OPTIONAL: You can include a series of option value pairs after the filename in
     (run filename)))
 
 (parse-command-line-and-run)
-
