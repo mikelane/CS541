@@ -14,16 +14,28 @@
 ;;;
 (defun listify (filename)
   (with-open-file (input filename)
-    (loop :for line := (read-line input nil) :while line
+    (loop for line = (read-line input nil) while line
           ;; While there was a line of input, collect the resulting list
-          :collect (let ((target nil)  ; local vars
+          collect (let ((target nil)  ; local vars
                          (data nil))
                      ;; Remove the commas, parse the values, and store as a list
                      (setf data (read-from-string (substitute #\Space #\, (format nil "(~d)~%" line))))
                      ;; Pop the target value off the list and store it
                      (setf target (pop data))
-                     ;; Make the data values a vector, append them to a list with target as the CAR
-                     (setf data (append `(,target) (eval (append '(vector) data))))))))
+                     ;; Make the data values a vector, set their values to be
+                     ;; between 0.0 and 1.0 (originally they are 0 to 255) and
+                     ;; append them to a list with target as the CAR
+                     (setf data
+                           (append
+                             `(,target)
+                             (make-array
+                               '(1 784)
+                               :initial-contents
+                               `(,(map
+                                    'list
+                                    #'(lambda (x) (/ x 255.0))
+                                    data)))))
+                     ))))
 
 
 ;;; Return the mean of the values over all columns as a list
@@ -123,14 +135,32 @@
 ;;; (int int float) => ((float))
 ;;;
 (defun initialize-weight-vector (m n range)
-  (make-array `(,m ,n) :initial-contents
-              (loop for i from 1 to m
-                    collect (mapcar (lambda (x) (- (random x) (/ range 2.0)))
-                                    (make-list n :initial-element (float range))))))
+  (make-array `(,m ,n)
+              :initial-contents
+              (loop for i from 0 below m
+                    collect
+                    (loop for i from 0 below n
+                          collect
+                          (- (random range (make-random-state t)) (/ range 2.0)))
+                    )))
 
 
 
+(defun run-tests ()
+  ;; This should print out the values of the mnist_test_10.csv set as a list of
+  ;; target value activation vectors.
+  (loop for item in (listify "mnist_test_10.csv") do
+        (print item))
 
+  ;; Test making a 3x5 array filled with random values between -0.25 and 0.25
+  (print (initialize-weight-vector 3 5 0.5))
+  (print (matrix-multiply
+    (make-array '(1 5) :initial-contents '((1 2 3 4 5)))
+    (make-array '(5 3) :initial-contents '((1 2 3) (4 5 6) (7 8 9) (10 11 12) (13 14 15)))))
+  )
+
+
+(run-tests)
 
 ;;; This should become the basis for the feed forward algorithm.
 #|
