@@ -5,6 +5,24 @@
 ;;;; Math and utility functions for Lab 3
 ;;;;
 
+(defvar *number-hidden-layers* 1)
+(defvar *number-hidden-activations* 89)    ; trying sqrt(784 * 10)
+(defvar *number-input-activations* 785)    ; 784 activations + bias
+(defvar *number-output-activations* 10)
+
+
+(defvar *test-data* '((5 (1.0 2.0 3.0 4.0))
+                      (6 (1.0 2.0 3.0 4.0))))
+(setf *number-hidden-activations* 2)
+(setf *number-input-activations* 4)
+
+
+(defvar *hidden-activations* (append '(1.0) (make-list *number-hidden-activations*)))
+(defvar *output-activations* (make-list *number-output-activations*))
+(defvar *error-terms* (list
+                        (make-list *number-hidden-activations*)
+                        (make-list *number-output-activations*)))
+
 
 #|
  | Takes mnist csv file and makes a list out of it that consists of
@@ -24,7 +42,6 @@
                     (setf target (pop data))
                     (setf data (append '(1.0) (map 'list #'(lambda (x) (/ x 255.0)) data)))
                     (list target data)))))
-
 
 
 #|
@@ -100,16 +117,8 @@
  | #(num) => #(num)
  |
  |#
-(defun transpose (a)
-  (let* ((m (array-dimension a 0))
-         (n (array-dimension a 1))
-         (b (make-array `(,n ,m) :initial-element 0)))
-    ;; Nothing too fancy, just walking over the matrix setting the appropriate values.
-    (loop for i from 0 below m do
-          (loop for j from 0 below n do
-                (setf (aref b j i)
-                      (aref a i j))))
-    b))
+(defun transpose (m)
+    (apply #'mapcar #'list m))
 
 
 #|
@@ -136,6 +145,13 @@
 				))
 
 
+;; Seed the weight matrices with random values
+(defvar *weight-matrices* (list (initialize-weight-matrix *number-input-activations*
+                                                          *number-hidden-activations*
+                                                          0.1)
+                                (initialize-weight-matrix (1+ *number-hidden-activations*)
+                                                          *number-output-activations*
+                                                          0.1)))
 
 
 #|
@@ -153,21 +169,13 @@
  |
  |#
 (defun matrix-multiply (a b)
- (mapcar
-   (lambda (row)
-     (apply #'mapcar
-            (lambda (&rest column)
-              (apply #'+ (mapcar #'* row column)))
-            b))
-   a))
-
-(defvar *test-data* (listify "mnist_test_10.csv"))
-(defvar *test-weight-matrix* (initialize-weight-matrix 785 5 0.5))
-(defvar *hidden-activations* (append '(1.0)
-                                     (car (matrix-multiply
-                                            (cdr (elt *test-data* 0))
-                                            *test-weight-matrix*))))
-(print *hidden-activations*)
+  (mapcar
+    (lambda (row)
+      (apply #'mapcar
+             (lambda (&rest column)
+               (apply #'+ (mapcar #'* row column)))
+             b))
+    a))
 
 
 #|
@@ -176,11 +184,56 @@
  | num => float
  |
  |#
-(defun sigmoid (x) (/ 1 (+ 1 (exp (- (float x))))))
+(defun sigmoid (x) (/ 1 (+ 1 (exp (- x)))))
 
 
+#|
+ | Forward propagate the activations (plus bias) to the hidden layer (not
+ | including the bias), take the sigmoid of the values, and add in a bias. Then
+ | forward propagate the hidden activations and the bias to the output activations
+ | layer and then take the sigmoid of the results. Finally, calculate the error
+ | terms.
+ |
+ |#
+(defun forward-propagate (input)
+  ;; Forward propagate to the hidden layer
+  (setf (cdr *hidden-activations*)
+        (map 'list #'sigmoid
+             (car (matrix-multiply
+                    (cdr input)
+                    (car *weight-matrices*)))))
 
-(defun forward-propagate)
+  ;; Forward propagate to the output layer
+  (setf *output-activations*
+        (map 'list #'sigmoid
+             (car (matrix-multiply
+                    (list *hidden-activations*)
+                    (cadr *weight-matrices*)))))
+
+  ;; Calculate error terms of output nodes
+  (setf (cadr *error-terms*)
+        (loop for unit in *output-activations*
+              for i from 0 below *number-output-activations*
+              collect (if (eq i (car input))
+                        (* unit (- 1 unit) (- 1 unit))
+                        (* unit (- 1 unit) (- 0 unit)))))
+
+  ;; Calculate error terms of hidden nodes
+  (setf (car *error-terms*)
+        (loop for hidden-unit in (cdr *hidden-activations*)
+              for weight-vector in (cdadr *weight-matrices*)
+              collect (* hidden-unit
+                        (- 1 hidden-unit)
+                        (caar (matrix-multiply
+                                (cdr *error-terms*)
+                                (transpose (list weight-vector))))))))
+
+
+(print *error-terms*)
+(forward-propagate (car *test-data*))
+(print *error-terms*)
+
+
 
 
 #|
