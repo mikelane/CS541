@@ -188,6 +188,28 @@
 
 
 #|
+ | Takes in a list and returns a list of the form ((i v1) (j v2)) where i is the
+ | index of the minimum value v1 in the list and j is the index of the maximum
+ | value v2 in the list
+ |
+ |#
+(defun find-min-max (l)
+  (let ((smallest most-positive-double-float)
+        (biggest most-negative-double-float)
+        (i 0)
+        (j 0))
+    (loop for v in l
+          for x from 0 below (length l) do
+          (if (> v biggest)
+            (progn (setf biggest v)
+                   (setf j x)))
+          (if (< v smallest)
+            (progn (setf smallest v)
+                   (setf i x))))
+    `((,i ,smallest) (,j ,biggest))))
+
+
+#|
  | Forward propagate the activations (plus bias) to the hidden layer (not
  | including the bias), take the sigmoid of the values, and add in a bias. Then
  | forward propagate the hidden activations and the bias to the output activations
@@ -210,7 +232,31 @@
                     (list *hidden-activations*)
                     (cadr *weight-matrices*)))))
 
-  ;; Calculate error terms of output nodes
+  ;; For testing print the output activations
+  (princ *output-activations*)
+
+  ;; Return the min and max indices and values
+  (find-min-max *output-activations*))
+
+
+#|
+ | Calculate the error terms of the output and hidden nodes. The output error is
+ |
+ | error_k = o_k * (1 - o_k) * (t_k - o_k)
+ |
+ | Where error_k is the error term of the kth output node, o_k is the value of
+ | the kth output after forward prop, and t_k is the target value of the kth
+ | output node. The hidden layer is:
+ |
+ | error_j = h_j * (1 - h_j) * (Sum_{k \in output units}(weight_{kj} * error_k))
+ |
+ | Where error_j is the error term of thekth hidden node, weight_{kj} is the
+ | weight of the edge from the jth hidden node to the kth output node and
+ | error_k is the output error at the kth node.
+ |
+ |#
+(defun calculate-error-terms (input)
+  ;; Calculate error terms of output nodes.
   (setf (cadr *error-terms*)
         (loop for unit in *output-activations*
               for i from 0 below *number-output-activations*
@@ -230,7 +276,8 @@
 
 
 (print *error-terms*)
-(forward-propagate (car *test-data*))
+(print (forward-propagate (car *test-data*)))
+(calculate-error-terms (car *test-data*))
 (print *error-terms*)
 
 
