@@ -13,20 +13,17 @@
 (defvar *momentum* 0.3)                   ; trying what we used in CS545
 
 
-(defvar *test-data* '((5 (1.0 2.0 3.0 4.0))
-                      (6 (1.0 2.0 3.0 4.0))))
-(setf *number-hidden-activations* 2)
-(setf *number-input-activations* 4)
+(defvar *test-data* '((5 (0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9))
+                      (6 (0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9))))
 
+(setf *number-hidden-activations* 2)
+(setf *number-input-activations* 9)
 
 (defvar *hidden-activations* (append '(1.0) (make-list *number-hidden-activations*)))
 (defvar *hidden-error-terms* (make-list *number-hidden-activations*))
 
 (defvar *output-activations* (make-list *number-output-activations*))
 (defvar *output-error-terms* (make-list *number-output-activations*))
-(defvar *error-terms* (list
-                        (make-list *number-hidden-activations*)
-                        (make-list *number-output-activations*)))
 
 
 #|
@@ -150,17 +147,26 @@
 				))
 
 
-;; Seed the weight matrices with random values
-(defvar *weight-matrices* (list (initialize-weight-matrix *number-input-activations*
-                                                          *number-hidden-activations*
-                                                          0.1)
-                                (initialize-weight-matrix (1+ *number-hidden-activations*)
-                                                          *number-output-activations*
-                                                          0.1)))
-(defvar *previous-output-weight-matrix*
+(defvar *input-to-hidden-weight-matrix*
+  (initialize-weight-matrix *number-input-activations*
+                            *number-hidden-activations*
+                            0.1))
+
+
+(defvar *hidden-to-output-weight-matrix*
+  (initialize-weight-matrix (1+ *number-hidden-activations*)
+                            *number-output-activations*
+                            0.1))
+
+(defvar *previous-output-weight-change-matrix*
   (make-list (1+ *number-hidden-activations*)
              :initial-element (make-list *number-output-activations*
-                                         :initial-element 1)))
+                                         :initial-element 0)))
+
+(defvar *previous-hidden-weight-change-matrix*
+  (make-list (1+ *number-input-activations*)
+             :initial-element (make-list *number-hidden-activations*
+                                         :initial-element 0)))
 
 
 #|
@@ -232,17 +238,14 @@
         (map 'list #'sigmoid
              (car (matrix-multiply
                     (cdr input)
-                    (car *weight-matrices*)))))
+                    *input-to-hidden-weight-matrix*))))
 
   ;; Forward propagate to the output layer
   (setf *output-activations*
         (map 'list #'sigmoid
              (car (matrix-multiply
                     (list *hidden-activations*)
-                    (cadr *weight-matrices*)))))
-
-  ;; For testing print the output activations
-  (princ *output-activations*)
+                    *hidden-to-output-weight-matrix*))))
 
   ;; Return the min and max indices and values
   (find-min-max *output-activations*))
@@ -266,7 +269,7 @@
  |#
 (defun calculate-error-terms (input)
   ;; Calculate error terms of output nodes.
-  (setf (cadr *error-terms*)
+  (setf *output-error-terms*
         (loop for unit in *output-activations*
               for i from 0 below *number-output-activations*
               collect (if (eq i (car input))
@@ -274,20 +277,18 @@
                         (* unit (- 1 unit) (- 0 unit)))))
 
   ;; Calculate error terms of hidden nodes
-  (setf (car *error-terms*)
+  (setf *hidden-error-terms*
         (loop for hidden-unit in (cdr *hidden-activations*)
-              for weight-vector in (cdadr *weight-matrices*)
+              for weight-vector in (cdr *hidden-to-output-weight-matrix*)
               collect (* hidden-unit
                         (- 1 hidden-unit)
                         (caar (matrix-multiply
-                                (cdr *error-terms*)
+                                (list *output-error-terms*)
                                 (transpose (list weight-vector))))))))
 
-
-(print *error-terms*)
 (print (forward-propagate (car *test-data*)))
 (calculate-error-terms (car *test-data*))
-(print *error-terms*)
+
 
 
 #|
@@ -302,32 +303,89 @@
  | w_ji <- w_ji + (learning rate * error_j * input activation i + momentum w_kj_t-1)
  |
  |#
-(defun update-weights ()
+(defun update-weights (input)
   ;; Error from hidden to output
-  (loop for weight-vector in (cadr *weight-matrices*)
-        for h in *hidden-activations* do
-        (princ (format nil "~%----------------------------------------------~%"))
-        (princ (format nil "original weight vector: ~s~%" weight-vector))
-        (princ (format nil "----------------------------------------------~%"))
-        (princ (format nil "    h: ~s~%" h))
-        (princ (format nil "    output activations: ~s~%" *output-activations*))
-        (princ (format nil "    output error terms: ~s~%" (cadr *error-terms*)))
-        (princ (format nil "~%----------------------------------------------~%"))
-        (princ (format nil "weight matrix: ~s~%" (cadr *weight-matrices*)))
-        (princ (format nil "previous weight matrix: ~s~%" *previous-output-weight-matrix*))
-        (princ (format nil "----------------------------------------------~%"))
-        (setf weight-vector
-              (loop for w in weight-vector
-                    for o in *output-activations*
-                    for del-o in (cadr *error-terms*)
-                    collect (+ (* *learning-rate* del-o h) (* *momentum* w))))
-        (princ (format nil "~%----------------------------------------------~%"))
-        (princ (format nil "new weight vector: ~s~%" weight-vector))
-        (princ (format nil "----------------------------------------------~%"))
-        ))
+  (let ((cur-Del-w-vect nil))
+    (loop for weight-vector in *hidden-to-output-weight-matrix*
+          for j from 0 below (length *hidden-to-output-weight-matrix*)
+          for prev-weight-change-vector in *previous-output-weight-change-matrix*
+          for h in *hidden-activations* do
+          ;(princ (format nil "~%----------------------------------------------~%"))
+          ;(princ (format nil "original weight vector: ~s~%" weight-vector))
+          ;(princ (format nil "----------------------------------------------~%"))
+          ;(princ (format nil "    h: ~s~%" h))
+          ;(princ (format nil "    output activations: ~s~%" *output-activations*))
+          ;(princ (format nil "    output error terms: ~s~%" *output-error-terms*))
+          ;(princ (format nil "    prev-weight-change-vector: ~s~%" prev-weight-change-vector))
+          ;(princ (format nil "~%----------------------------------------------~%"))
+          ;(princ (format nil "weight matrix: ~s~%" *hidden-to-output-weight-matrix*))
+          ;(princ (format nil "----------------------------------------------~%"))
+          (setf cur-Del-w-vect
+                (loop for del-k in *output-error-terms*
+                      for Del-w in prev-weight-change-vector
+                      collect (+ (* *learning-rate* del-k h)
+                                 (* *momentum* Del-w))))
+          (setf (elt *previous-output-weight-change-matrix* j)
+                (setf prev-weight-change-vector cur-Del-w-vect))
+          (setf (elt *hidden-to-output-weight-matrix* j)
+                (setf weight-vector (mapcar #'+ weight-vector cur-Del-w-vect)))
+          ;(princ (format nil "~%----------------------------------------------~%"))
+          ;(princ (format nil "*previous-output-weight-change-matrix*: ~s~%"
+                         ;*previous-output-weight-change-matrix*))
+          ;(princ (format nil "updated weight vector: ~s~%" weight-vector))
+          ;(princ (format nil "----------------------------------------------~%"))
+          )
+    (loop for weight-vector in *input-to-hidden-weight-matrix*
+          for i from 0 below (length *input-to-hidden-weight-matrix*)
+          for prev-weight-change-vector in *previous-hidden-weight-change-matrix*
+          for x in (cadr input) do
+          ;(princ (format nil "~%----------------------------------------------~%"))
+          ;(princ (format nil "original weight vector: ~s~%" weight-vector))
+          ;(princ (format nil "----------------------------------------------~%"))
+          ;(princ (format nil "    x: ~s~%" x))
+          ;(princ (format nil "    hidden activations: ~s~%" (cdr *hidden-activations*)))
+          ;(princ (format nil "    hidden error terms: ~s~%" *hidden-error-terms*))
+          ;(princ (format nil "    prev-weight-change-vector: ~s~%" prev-weight-change-vector))
+          ;(princ (format nil "~%----------------------------------------------~%"))
+          ;(princ (format nil "weight matrix: ~s~%" *input-to-hidden-weight-matrix*))
+          ;(princ (format nil "----------------------------------------------~%"))
+          (setf cur-Del-w-vect
+                (loop for del-j in *hidden-error-terms*
+                      for Del-w in prev-weight-change-vector
+                      collect (+ (* *learning-rate* del-j x)
+                                 (* *momentum* Del-w))))
+          (setf (elt *previous-hidden-weight-change-matrix* i)
+                (setf prev-weight-change-vector cur-Del-w-vect))
+          (setf (elt *input-to-hidden-weight-matrix* i)
+                (setf weight-vector (mapcar #'+ weight-vector cur-Del-w-vect)))
+          )))
 
 (print "=====")
-(update-weights)
+(print "original *input-to-hidden-weight-matrix*")
+(print *input-to-hidden-weight-matrix*)
+(print "original *hidden-to-output-weight-matrix*")
+(print *hidden-to-output-weight-matrix*)
+(print "=====")
+(update-weights (car *test-data*))
+
+(print "=====")
+(print "*output-activations*")
+(print *output-activations*)
+(print "updated *input-to-hidden-weight-matrix*")
+(print *input-to-hidden-weight-matrix*)
+(print "updated *hidden-to-output-weight-matrix*")
+(print *hidden-to-output-weight-matrix*)
+
+(print (forward-propagate (car *test-data*)))
+(calculate-error-terms (car *test-data*))
+(update-weights (car *test-data*))
+(print "=====")
+(print "*output-activations*")
+(print *output-activations*)
+(print "updated *input-to-hidden-weight-matrix*")
+(print *input-to-hidden-weight-matrix*)
+(print "updated *hidden-to-output-weight-matrix*")
+(print *hidden-to-output-weight-matrix*)
 
 
 #|
