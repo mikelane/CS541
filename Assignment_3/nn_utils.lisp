@@ -7,30 +7,25 @@
 
 (load "mnist-loader")
 
+#|
+ | Read in the data from the mnist files
+ |
+ |#
+(defvar training-info (import-data "train-labels.idx1-ubyte" "train-images.idx3-ubyte"))
+(defvar testing-info (import-data "t10k-labels.idx1-ubyte" "t10k-images.idx3-ubyte"))
+
+
+#|
+ | Define the meta parameters
+ |
+ |#
 (defvar *number-hidden-layers* 1)
-;; I'm wondering what a 10 x 10 image of the hidden layer will look like
 (defvar *number-hidden-activations* 100)
-(defvar *number-input-activations* 785)   ; 784 activations + bias
-(defvar *number-output-activations* 10)   ; for digits 0 to 9
-(defvar *learning-rate* 0.3)              ; trying what we used in CS545
-(defvar *momentum* 0.3)                   ; trying what we used in CS545
-
-
-#|
- |(defvar *test-data* '((5 (0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9))
- |                      (6 (0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9))))
- |#
-
-#|
- |(setf *number-hidden-activations* 2)
- |(setf *number-input-activations* 9)
- |#
-
-(defvar *hidden-activations* (append '(1.0) (make-list *number-hidden-activations*)))
-(defvar *hidden-error-terms* (make-list *number-hidden-activations*))
-
-(defvar *output-activations* (make-list *number-output-activations*))
-(defvar *output-error-terms* (make-list *number-output-activations*))
+(defvar *number-input-activations* (1+ (elt training-info 1)))
+(defvar *number-output-activations* 10)
+(defvar *learning-rate* 0.3)
+(defvar *momentum* 0.3)
+(defvar *number-of-epochs* 500)
 
 
 #|
@@ -146,28 +141,6 @@
 							collect
 							(- (random range (make-random-state t)) (/ range 2.0)))
 				))
-
-
-(defvar *input-to-hidden-weight-matrix*
-  (initialize-weight-matrix *number-input-activations*
-                            *number-hidden-activations*
-                            0.1))
-
-
-(defvar *hidden-to-output-weight-matrix*
-  (initialize-weight-matrix (1+ *number-hidden-activations*)
-                            *number-output-activations*
-                            0.1))
-
-(defvar *previous-output-weight-change-matrix*
-  (make-list (1+ *number-hidden-activations*)
-             :initial-element (make-list *number-output-activations*
-                                         :initial-element 0)))
-
-(defvar *previous-hidden-weight-change-matrix*
-  (make-list (1+ *number-input-activations*)
-             :initial-element (make-list *number-hidden-activations*
-                                         :initial-element 0)))
 
 
 #|
@@ -287,12 +260,6 @@
                                 (list *output-error-terms*)
                                 (transpose (list weight-vector))))))))
 
-#|
- |(print (forward-propagate (car *test-data*)))
- |(calculate-error-terms (car *test-data*))
- |#
-
-
 
 #|
  | Update the weight at the current step. Update each weight at the current step,
@@ -362,60 +329,4 @@
           (setf (elt *input-to-hidden-weight-matrix* i)
                 (setf weight-vector (mapcar #'+ weight-vector cur-Del-w-vect)))
           )))
-
-#|
- |(print "=====")
- |(print "original *input-to-hidden-weight-matrix*")
- |(print *input-to-hidden-weight-matrix*)
- |(print "original *hidden-to-output-weight-matrix*")
- |(print *hidden-to-output-weight-matrix*)
- |(print "=====")
- |(update-weights (car *test-data*))
- |
- |(print "=====")
- |(print "*output-activations*")
- |(print *output-activations*)
- |(print "updated *input-to-hidden-weight-matrix*")
- |(print *input-to-hidden-weight-matrix*)
- |(print "updated *hidden-to-output-weight-matrix*")
- |(print *hidden-to-output-weight-matrix*)
- |
- |(print (forward-propagate (car *test-data*)))
- |(calculate-error-terms (car *test-data*))
- |(update-weights (car *test-data*))
- |(print "=====")
- |(print "*output-activations*")
- |(print *output-activations*)
- |(print "updated *input-to-hidden-weight-matrix*")
- |(print *input-to-hidden-weight-matrix*)
- |(print "updated *hidden-to-output-weight-matrix*")
- |(print *hidden-to-output-weight-matrix*)
- |
- |#
-
-#|
- |(defun run-tests ()
- |  ;; Test making a 3x5 array filled with random values between -0.25 and 0.25
- |  (print (initialize-weight-matrix 3 5 0.5))
- |  (print (matrix-multiply
- |    (make-array '(1 5) :initial-contents '((1 2 3 4 5)))
- |    (make-array '(5 3) :initial-contents '((1 2 3) (4 5 6) (7 8 9) (10 11 12) (13 14 15)))))
- |
- |  ;; Test getting input and creating a larger weight matrix
- |  (let ((*test-data* (listify "mnist_test_10.csv"))
- |        (*test-weight-matrix* (initialize-weight-matrix 785 5 0.5)))
- |    (loop for item in *test-data* do
- |          (print item))
- |
- |    (aref *test-weight-matrix* 0 0)
- |
- |    ;; Test feeding the activations forward to an output of 5 nodes
- |    (print (matrix-multiply (cdr (elt *test-data* 0))
- |                            *test-weight-matrix*))
- |    ))
- |
- |
- |(run-tests)
- |#
-
 
