@@ -1,0 +1,79 @@
+(|SYSTEM|::|VERSION| '(20080430.))
+#0Y_ #0Y |CHARSET|::|UTF-8|
+#Y(#:|1 47 (DEFUN READ-4-BYTES (FILE-IN) ...)-1|
+   #20Y(00 00 00 00 00 00 00 00 20 01 DA 2F 01 DA DC 32 9C C5 19 01)
+   (|COMMON-LISP-USER|::|READ-4-BYTES| |SYSTEM|::|REMOVE-OLD-DEFINITIONS|
+    #Y(|COMMON-LISP-USER|::|READ-4-BYTES|
+       #96Y(00 00 00 00 01 00 00 00 26 02 38 02 72 8F AE 38 02 72 98 AF 38 02
+            72 98 B0 38 02 72 98 B1 38 02 72 98 DA B1 38 02 31 95 B0 01 02 DB
+            DC 01 02 B6 2D 08 03 B0 01 02 DB DC 01 02 B5 2D 08 03 B0 01 02 DB
+            DC 01 02 B4 2D 08 03 B0 01 02 DB DC 01 02 B3 2D 08 03 16 04 AC 81
+            90 00 38 05 31 89 19 02)
+       ("#x" 2. #\0 |SYSTEM|::|DO-FORMAT-HEXADECIMAL|)
+       (|COMMON-LISP|::|T| |COMMON-LISP|::|T| |COMMON-LISP|::|T|)
+       (|COMMON-LISP-USER|::|FILE-IN|) |COMMON-LISP|::|NIL| 1))
+   (|COMMON-LISP|::|T| |COMMON-LISP|::|T| |COMMON-LISP|::|T|))
+#Y(#:|50 111 (DEFUN IMPORT-DATA (LABELS-FILENAME DATA-FILENAME) ...)-2|
+   #20Y(00 00 00 00 00 00 00 00 20 01 DA 2F 01 DA DC 32 9C C5 19 01)
+   (|COMMON-LISP-USER|::|IMPORT-DATA| |SYSTEM|::|REMOVE-OLD-DEFINITIONS|
+    #Y(|COMMON-LISP-USER|::|IMPORT-DATA|
+       #697Y(05 00 02 00 02 00 00 00 26 03 DA 64 38 06 C6 FA 71 1D DB DB DB DB
+             DB DB DB B6 DC DD 38 04 72 0B 53 82 7F B8 DC DD 38 04 72 0B 53 82
+             55 B1 2F 04 09 0C AE 2F 04 09 0B B1 2F 04 09 09 AE 2F 04 09 0A AE
+             2F 04 09 08 AE 2F 04 FF B4 B4 82 02 39 06 38 02 72 8F DF AD 38 02
+             31 95 AC 81 90 00 38 01 31 90 38 02 72 8F E0 AD 38 02 31 95 AC 2F
+             07 10 08 C0 B0 31 8D 11 AC 2F 09 AC 31 97 AC 81 90 00 38 01 31 90
+             38 02 72 8F E4 AD 38 02 31 95 AC 01 06 C0 2D 08 0B E6 AD 38 02 31
+             95 AC 81 90 00 38 01 31 90 38 02 72 8F E7 AD 38 02 31 95 AC 01 06
+             BD 2D 08 0B E8 AD 38 02 31 95 AC 81 90 00 38 01 31 90 38 02 72 8F
+             E9 AD 38 02 31 95 AC 2F 07 10 08 BF B0 31 8D 11 AC 2F 09 AC 31 97
+             AC 81 90 00 38 01 31 90 38 02 72 8F EA AD 38 02 31 95 AC 01 06 BF
+             2D 08 0B EB AD 38 02 31 95 AC 81 90 00 38 01 31 90 38 02 72 8F EC
+             AD 38 02 31 95 AC 01 06 BE 2D 08 0B AC 31 97 AC 81 90 00 38 01 31
+             90 38 02 72 8F ED AD 38 02 31 95 AC 01 06 BC 2D 08 0B EE AD 38 02
+             31 95 AC 01 06 BB 2D 08 0B AC 31 97 AC 81 90 00 38 01 31 90 38 02
+             72 8F EF AD 38 02 31 95 AC 01 06 BA 2D 08 0B AC 31 97 AC 81 90 00
+             38 01 31 90 38 02 72 8F F0 AD 38 02 31 95 AC 81 90 00 38 01 31 90
+             38 02 72 8F F1 AD 38 02 31 95 AC 81 90 00 38 01 31 90 38 02 72 8F
+             F2 AD 38 02 31 95 AC 81 90 00 38 01 31 90 38 02 72 8F F3 AD 38 02
+             31 95 AC 81 90 00 38 01 31 90 DB 63 DB 1B 80 A4 38 02 72 8F B5 38
+             02 72 98 F4 AE 38 02 31 95 AD 01 02 F5 F6 01 02 B3 2D 08 1D 16 01
+             AC 81 90 00 38 05 80 89 02 65 1E 65 1F 65 20 DB 63 1B 35 AE AE 7B
+             02 BD 38 01 31 1C 1B 80 4A 38 02 72 8F B7 38 02 72 98 65 21 AE 38
+             02 31 95 AD 01 02 F5 F6 01 02 B3 2D 08 1D 16 01 AC 81 90 00 38 05
+             71 89 84 00 85 01 AD BB 91 01 34 51 AC 31 B1 16 01 F8 73 00 27 82
+             02 23 01 BC 71 18 8E AD FF B1 AE AE 7B 02 BD 31 1A AC 65 22 BA 73
+             02 39 72 D2 8F AC 11 38 02 72 8F 65 23 AD 31 94 AC 81 90 00 38 01
+             31 90 85 00 AC B9 91 01 34 FF 55 16 03 38 02 72 8F 65 24 AD 38 02
+             31 95 AC 81 90 00 38 01 31 90 93 02 03 14 2F 25 3E 54 05 00 00 00
+             1D 0F 1B 06 05 00 00 00 1D 07 14 65 26 64 2D 03 25 55 16 01 93 02
+             03 14 2F 25 3E 54 05 00 00 00 1D 0F 1B 06 05 00 00 00 1D 07 14 65
+             26 64 2D 03 25 55 16 01 B0 AD B5 61 03 19 0B)
+       (1. 0. :|INPUT| |COMMON-LISP|::|UNSIGNED-BYTE|
+        |COMMON-LISP-USER|::|READ-4-BYTES|
+        "--------------------------------------------------------------------------\n"
+        "Loading Labels File: " |SYSTEM|::|STREAM-START-S-EXPRESSION|
+        |COMMON-LISP|::|*PRINT-RIGHT-MARGIN*|
+        |SYSTEM|::|STREAM-END-S-EXPRESSION| " - Magic Number: "
+        |SYSTEM|::|DO-FORMAT-DECIMAL| " Expected: 2049\n"
+        " - Number of labels: " "\n\n" "Loading Image File: "
+        " - Magic Number: " " Expected: 2051\n" " - Number of images: "
+        " - Image dimensions rows: " " columns: "
+        " - Total number of input activations: "
+        "--------------------------------------------------------------------------\n"
+        "Loading labels and data, merging, and pushing to a vector ...\n\n"
+        "                       25%                      50%                      75%                      100%\n"
+        "------------------------|------------------------|------------------------|------------------------|\n"
+        "#x" 2. #\0 |SYSTEM|::|DO-FORMAT-HEXADECIMAL| (1.0f0)
+        |COMMON-LISP|::|LIST|
+        #Y(|COMMON-LISP-USER|::|IMPORT-DATA-1|
+           #17Y(00 00 00 00 01 00 00 00 26 02 DA AE 33 02 39 19 02)
+           (0.003921569f0)
+           (|COMMON-LISP|::|T| |COMMON-LISP|::|NIL| |COMMON-LISP|::|NIL|)
+           (|COMMON-LISP-USER|::|X|) |COMMON-LISP|::|NIL| 1)
+        "#x" #10r1/100 #\* "DONE\n" |COMMON-LISP|::|CLOSE| :|ABORT|)
+       (|COMMON-LISP|::|T| |COMMON-LISP|::|T| |COMMON-LISP|::|T|)
+       (|COMMON-LISP-USER|::|LABELS-FILENAME|
+        |COMMON-LISP-USER|::|DATA-FILENAME|)
+       |COMMON-LISP|::|NIL| 1))
+   (|COMMON-LISP|::|T| |COMMON-LISP|::|T| |COMMON-LISP|::|T|))

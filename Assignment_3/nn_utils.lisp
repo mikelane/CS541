@@ -5,6 +5,8 @@
 ;;;; Math and utility functions for Lab 3
 ;;;;
 
+(load "mnist_digit_data_loader.lisp")
+
 (defvar *number-hidden-layers* 1)
 (defvar *number-hidden-activations* 89)   ; trying sqrt(784 * 10)
 (defvar *number-input-activations* 785)   ; 784 activations + bias
@@ -24,30 +26,6 @@
 
 (defvar *output-activations* (make-list *number-output-activations*))
 (defvar *output-error-terms* (make-list *number-output-activations*))
-
-
-#|
- | Takes mnist csv file and makes a vector out of it that consists of lists with
- | the target value in the car and a list of the activations as the cdr.
- |
- | string => #((num (num)))
- |
- |#
-(defun import-data (filename)
-  (let ((ret (make-array 1 :adjustable t :fill-pointer 0)))
-    (with-open-file (input filename)
-      (loop for line = (read-line input nil)
-            while line do
-            (let ((target nil)
-                  (data nil))
-              (setf data
-                    (read-from-string (substitute #\Space #\, (format nil "(~d)~%" line))))
-              (setf target (pop data))
-              (setf data (append '(1.0) (map 'list #'(lambda (x) (/ x 255.0)) data)))
-              (cond ((> (fill-pointer ret) 0)
-                     (vector-push-extend (list target data) ret))
-                    (t (vector-push (list target data) ret))))))
-    ret))
 
 
 #|
