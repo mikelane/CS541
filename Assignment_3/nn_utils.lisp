@@ -5,21 +5,26 @@
 ;;;; Math and utility functions for Lab 3
 ;;;;
 
-(load "mnist_digit_data_loader.lisp")
+(load "mnist-loader")
 
 (defvar *number-hidden-layers* 1)
-(defvar *number-hidden-activations* 89)   ; trying sqrt(784 * 10)
+;; I'm wondering what a 10 x 10 image of the hidden layer will look like
+(defvar *number-hidden-activations* 100)
 (defvar *number-input-activations* 785)   ; 784 activations + bias
 (defvar *number-output-activations* 10)   ; for digits 0 to 9
 (defvar *learning-rate* 0.3)              ; trying what we used in CS545
 (defvar *momentum* 0.3)                   ; trying what we used in CS545
 
 
-(defvar *test-data* '((5 (0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9))
-                      (6 (0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9))))
+#|
+ |(defvar *test-data* '((5 (0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9))
+ |                      (6 (0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9))))
+ |#
 
-(setf *number-hidden-activations* 2)
-(setf *number-input-activations* 9)
+#|
+ |(setf *number-hidden-activations* 2)
+ |(setf *number-input-activations* 9)
+ |#
 
 (defvar *hidden-activations* (append '(1.0) (make-list *number-hidden-activations*)))
 (defvar *hidden-error-terms* (make-list *number-hidden-activations*))
@@ -282,8 +287,10 @@
                                 (list *output-error-terms*)
                                 (transpose (list weight-vector))))))))
 
-(print (forward-propagate (car *test-data*)))
-(calculate-error-terms (car *test-data*))
+#|
+ |(print (forward-propagate (car *test-data*)))
+ |(calculate-error-terms (car *test-data*))
+ |#
 
 
 
@@ -356,33 +363,35 @@
                 (setf weight-vector (mapcar #'+ weight-vector cur-Del-w-vect)))
           )))
 
-(print "=====")
-(print "original *input-to-hidden-weight-matrix*")
-(print *input-to-hidden-weight-matrix*)
-(print "original *hidden-to-output-weight-matrix*")
-(print *hidden-to-output-weight-matrix*)
-(print "=====")
-(update-weights (car *test-data*))
-
-(print "=====")
-(print "*output-activations*")
-(print *output-activations*)
-(print "updated *input-to-hidden-weight-matrix*")
-(print *input-to-hidden-weight-matrix*)
-(print "updated *hidden-to-output-weight-matrix*")
-(print *hidden-to-output-weight-matrix*)
-
-(print (forward-propagate (car *test-data*)))
-(calculate-error-terms (car *test-data*))
-(update-weights (car *test-data*))
-(print "=====")
-(print "*output-activations*")
-(print *output-activations*)
-(print "updated *input-to-hidden-weight-matrix*")
-(print *input-to-hidden-weight-matrix*)
-(print "updated *hidden-to-output-weight-matrix*")
-(print *hidden-to-output-weight-matrix*)
-
+#|
+ |(print "=====")
+ |(print "original *input-to-hidden-weight-matrix*")
+ |(print *input-to-hidden-weight-matrix*)
+ |(print "original *hidden-to-output-weight-matrix*")
+ |(print *hidden-to-output-weight-matrix*)
+ |(print "=====")
+ |(update-weights (car *test-data*))
+ |
+ |(print "=====")
+ |(print "*output-activations*")
+ |(print *output-activations*)
+ |(print "updated *input-to-hidden-weight-matrix*")
+ |(print *input-to-hidden-weight-matrix*)
+ |(print "updated *hidden-to-output-weight-matrix*")
+ |(print *hidden-to-output-weight-matrix*)
+ |
+ |(print (forward-propagate (car *test-data*)))
+ |(calculate-error-terms (car *test-data*))
+ |(update-weights (car *test-data*))
+ |(print "=====")
+ |(print "*output-activations*")
+ |(print *output-activations*)
+ |(print "updated *input-to-hidden-weight-matrix*")
+ |(print *input-to-hidden-weight-matrix*)
+ |(print "updated *hidden-to-output-weight-matrix*")
+ |(print *hidden-to-output-weight-matrix*)
+ |
+ |#
 
 #|
  |(defun run-tests ()
@@ -408,4 +417,5 @@
  |
  |(run-tests)
  |#
+
 
