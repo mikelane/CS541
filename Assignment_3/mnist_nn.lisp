@@ -6,9 +6,11 @@
 ;;;;
 
 (defvar *number-hidden-layers* 1)
-(defvar *number-hidden-activations* 89)    ; trying sqrt(784 * 10)
-(defvar *number-input-activations* 785)    ; 784 activations + bias
-(defvar *number-output-activations* 10)
+(defvar *number-hidden-activations* 89)   ; trying sqrt(784 * 10)
+(defvar *number-input-activations* 785)   ; 784 activations + bias
+(defvar *number-output-activations* 10)   ; for digits 0 to 9
+(defvar *learning-rate* 0.3)              ; trying what we used in CS545
+(defvar *momentum* 0.3)                   ; trying what we used in CS545
 
 
 (defvar *test-data* '((5 (1.0 2.0 3.0 4.0))
@@ -18,7 +20,10 @@
 
 
 (defvar *hidden-activations* (append '(1.0) (make-list *number-hidden-activations*)))
+(defvar *hidden-error-terms* (make-list *number-hidden-activations*))
+
 (defvar *output-activations* (make-list *number-output-activations*))
+(defvar *output-error-terms* (make-list *number-output-activations*))
 (defvar *error-terms* (list
                         (make-list *number-hidden-activations*)
                         (make-list *number-output-activations*)))
@@ -152,6 +157,10 @@
                                 (initialize-weight-matrix (1+ *number-hidden-activations*)
                                                           *number-output-activations*
                                                           0.1)))
+(defvar *previous-output-weight-matrix*
+  (make-list (1+ *number-hidden-activations*)
+             :initial-element (make-list *number-output-activations*
+                                         :initial-element 1)))
 
 
 #|
@@ -281,6 +290,44 @@
 (print *error-terms*)
 
 
+#|
+ | Update the weight at the current step. Update each weight at the current step,
+ | w_kj_t from the hidden to output layer:
+ |
+ | w_kj_t <- w_kj + (learning rate * error_k * h_j + momentum * w_kj_t-1)
+ |
+ | Update each weight at the current step w_ji_t from the input to the hidden
+ | layer:
+ |
+ | w_ji <- w_ji + (learning rate * error_j * input activation i + momentum w_kj_t-1)
+ |
+ |#
+(defun update-weights ()
+  ;; Error from hidden to output
+  (loop for weight-vector in (cadr *weight-matrices*)
+        for h in *hidden-activations* do
+        (princ (format nil "~%----------------------------------------------~%"))
+        (princ (format nil "original weight vector: ~s~%" weight-vector))
+        (princ (format nil "----------------------------------------------~%"))
+        (princ (format nil "    h: ~s~%" h))
+        (princ (format nil "    output activations: ~s~%" *output-activations*))
+        (princ (format nil "    output error terms: ~s~%" (cadr *error-terms*)))
+        (princ (format nil "~%----------------------------------------------~%"))
+        (princ (format nil "weight matrix: ~s~%" (cadr *weight-matrices*)))
+        (princ (format nil "previous weight matrix: ~s~%" *previous-output-weight-matrix*))
+        (princ (format nil "----------------------------------------------~%"))
+        (setf weight-vector
+              (loop for w in weight-vector
+                    for o in *output-activations*
+                    for del-o in (cadr *error-terms*)
+                    collect (+ (* *learning-rate* del-o h) (* *momentum* w))))
+        (princ (format nil "~%----------------------------------------------~%"))
+        (princ (format nil "new weight vector: ~s~%" weight-vector))
+        (princ (format nil "----------------------------------------------~%"))
+        ))
+
+(print "=====")
+(update-weights)
 
 
 #|
