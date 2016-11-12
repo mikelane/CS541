@@ -20,12 +20,30 @@
  |
  |#
 (defvar *number-hidden-layers* 1)
-(defvar *number-hidden-activations* 100)
+(defvar *number-hidden-activations* 5)
 (defvar *number-input-activations* (1+ (elt training-info 1)))
 (defvar *number-output-activations* 10)
 (defvar *learning-rate* 0.3)
 (defvar *momentum* 0.3)
 (defvar *number-of-epochs* 500)
+
+
+#|
+ | Set up the training and testing data
+ |
+ |#
+(defvar *training-data* (elt training-info 2))
+(defvar *testing-data* (elt testing-info 2))
+
+
+#|
+ | Set up the other data structures we need.
+ |
+ |#
+(defvar *hidden-activations* (append '(1.0) (make-list *number-hidden-activations*)))
+(defvar *hidden-error-terms* (make-list *number-hidden-activations*))
+(defvar *output-activations* (make-list *number-output-activations*))
+(defvar *output-error-terms* (make-list *number-output-activations*))
 
 
 #|
@@ -144,6 +162,36 @@
 
 
 #|
+ | Randomize a matrix of randomized weights for input to hidden and hidden to
+ | output
+ |
+ |#
+(defvar *input-to-hidden-weight-matrix*
+  (initialize-weight-matrix *number-input-activations*
+                            *number-hidden-activations*
+                            0.5))
+(defvar *hidden-to-output-weight-matrix*
+  (initialize-weight-matrix (1+ *number-hidden-activations*)
+                            *number-output-activations*
+                            0.5))
+
+
+#|
+ | Initialize a data structure to hold previous weight changes to facilitate
+ | using the momentum to prevent oscillations
+ |
+ |#
+(defvar *previous-output-weight-change-matrix*
+  (make-list (1+ *number-hidden-activations*)
+             :initial-element (make-list *number-output-activations*
+                                         :initial-element 0)))
+(defvar *previous-hidden-weight-change-matrix*
+  (make-list (1+ *number-input-activations*)
+             :initial-element (make-list *number-hidden-activations*
+                                         :initial-element 0)))
+
+
+#|
  | Multiply two matrices together. Note, this works for vectors, too, but the
  | vectors must be a list of (a) list(s), e.g. '((1 2 3)) or '((1) (2) (3)). The
  | function requires that you give it matrices and vectors that are in the
@@ -162,7 +210,8 @@
     (lambda (row)
       (apply #'mapcar
              (lambda (&rest column)
-               (apply #'+ (mapcar #'* row column)))
+               (apply #'+ (without-floating-point-underflow
+                            (mapcar #'* row column))))
              b))
     a))
 
@@ -173,7 +222,10 @@
  | num => float
  |
  |#
-(defun sigmoid (x) (/ 1 (+ 1 (exp (- x)))))
+(defun sigmoid (x) (handler-case
+                     (without-floating-point-underflow
+                       (/ 1 (+ 1 (exp (- x)))))
+                     (floating-point-overflow () 0.0)))
 
 
 #|
@@ -182,20 +234,15 @@
  | value v2 in the list
  |
  |#
-(defun find-min-max (l)
-  (let ((smallest most-positive-double-float)
-        (biggest most-negative-double-float)
-        (i 0)
-        (j 0))
+(defun find-max (l)
+  (let ((biggest most-negative-double-float)
+        (i 0))
     (loop for v in l
-          for x from 0 below (length l) do
+          for j from 0 below (length l) do
           (if (> v biggest)
             (progn (setf biggest v)
-                   (setf j x)))
-          (if (< v smallest)
-            (progn (setf smallest v)
-                   (setf i x))))
-    `((,i ,smallest) (,j ,biggest))))
+                   (setf i j))))
+    biggest))
 
 
 #|
@@ -219,10 +266,17 @@
         (map 'list #'sigmoid
              (car (matrix-multiply
                     (list *hidden-activations*)
-                    *hidden-to-output-weight-matrix*))))
+                    *hidden-to-output-weight-matrix*)))))
 
-  ;; Return the min and max indices and values
-  (find-min-max *output-activations*))
+
+#|
+ | Run an input vector though the network and return the index of the maximum
+ | output activation.
+ |
+ |#
+(defun evaluate (input)
+  (forward-propagate input)
+  (find-max *output-activations*))
 
 
 #|
@@ -247,18 +301,21 @@
         (loop for unit in *output-activations*
               for i from 0 below *number-output-activations*
               collect (if (eq i (car input))
-                        (* unit (- 1 unit) (- 1 unit))
-                        (* unit (- 1 unit) (- 0 unit)))))
+                        (without-floating-point-underflow
+                          (* unit (- 1 unit) (- 1 unit)))
+                        (without-floating-point-underflow
+                          (* unit (- 1 unit) (- 0 unit))))))
 
   ;; Calculate error terms of hidden nodes
   (setf *hidden-error-terms*
         (loop for hidden-unit in (cdr *hidden-activations*)
               for weight-vector in (cdr *hidden-to-output-weight-matrix*)
-              collect (* hidden-unit
-                        (- 1 hidden-unit)
-                        (caar (matrix-multiply
-                                (list *output-error-terms*)
-                                (transpose (list weight-vector))))))))
+              collect (without-floating-point-underflow
+                        (* hidden-unit
+                           (- 1 hidden-unit)
+                           (caar (matrix-multiply
+                                   (list *output-error-terms*)
+                                   (transpose (list weight-vector)))))))))
 
 
 #|
@@ -293,8 +350,9 @@
           (setf cur-Del-w-vect
                 (loop for del-k in *output-error-terms*
                       for Del-w in prev-weight-change-vector
-                      collect (+ (* *learning-rate* del-k h)
-                                 (* *momentum* Del-w))))
+                      collect (without-floating-point-underflow
+                                (+ (* *learning-rate* del-k h)
+                                   (* *momentum* Del-w)))))
           (setf (elt *previous-output-weight-change-matrix* j)
                 (setf prev-weight-change-vector cur-Del-w-vect))
           (setf (elt *hidden-to-output-weight-matrix* j)
@@ -322,11 +380,14 @@
           (setf cur-Del-w-vect
                 (loop for del-j in *hidden-error-terms*
                       for Del-w in prev-weight-change-vector
-                      collect (+ (* *learning-rate* del-j x)
-                                 (* *momentum* Del-w))))
+                      collect (without-floating-point-underflow
+                                (+ (* *learning-rate* del-j x)
+                                   (* *momentum* Del-w)))))
           (setf (elt *previous-hidden-weight-change-matrix* i)
                 (setf prev-weight-change-vector cur-Del-w-vect))
           (setf (elt *input-to-hidden-weight-matrix* i)
                 (setf weight-vector (mapcar #'+ weight-vector cur-Del-w-vect)))
           )))
+
+
 

@@ -1,0 +1,41 @@
+(|SYSTEM|::|VERSION| '(20080430.))
+#0Y_ #0Y |CHARSET|::|UTF-8|
+#Y(#:|1 8 (LOAD "nn_utils.fas")-1|
+   #15Y(00 00 00 00 00 00 00 00 20 01 DA 2F 01 19 01)
+   ("nn_utils.fas" |COMMON-LISP|::|LOAD|)
+   (|COMMON-LISP|::|T| |COMMON-LISP|::|T| |COMMON-LISP|::|T|))
+#Y(#:|11 15 (BREAK)-2| #14Y(00 00 00 00 00 00 00 00 20 01 2E 00 19 01)
+   (|COMMON-LISP|::|BREAK|)
+   (|COMMON-LISP|::|T| |COMMON-LISP|::|T| |COMMON-LISP|::|T|))
+#Y(#:|16 16 (PRINC (FORMAT NIL "Starting Epochs~%"))-3|
+   #30Y(00 00 00 00 00 00 00 00 20 01 38 02 72 8F DA AD 38 02 31 95 AC 81 90 00
+        38 01 31 90 19 01)
+   ("Starting Epochs\n")
+   (|COMMON-LISP|::|T| |COMMON-LISP|::|T| |COMMON-LISP|::|T|))
+#Y(#:|17 18 (PRINC (FORMAT NIL "~%Training progress:~%"))-4|
+   #30Y(00 00 00 00 00 00 00 00 20 01 38 02 72 8F DA AD 38 02 31 95 AC 81 90 00
+        38 01 31 90 19 01)
+   ("\n
+Training progress:\n")
+   (|COMMON-LISP|::|T| |COMMON-LISP|::|T| |COMMON-LISP|::|T|))
+#Y(#:|19 32 (LOOP FOR EPOCH-NUM ...)-5|
+   #194Y(00 00 00 00 00 00 00 00 20 01 DA 1B 80 AA 6B 02 2F 03 0F 02 38 02 72
+         8F DE AD 38 02 31 95 AC 81 90 00 38 01 31 90 38 02 72 8F DF AD 38 02
+         31 95 AC 81 90 00 38 01 31 90 38 02 72 8F AC 01 02 E0 E1 01 02 B4 2D
+         08 08 E3 AD 38 02 31 95 AC 81 90 00 38 01 31 90 DA 01 03 0E 02 FA C5
+         F9 1B 2A AE AE 82 01 01 00 AF E5 72 D2 8F AC 10 38 02 72 8F E6 AD 31
+         94 AC 81 90 00 38 01 31 90 AC 2F 0D AC 2F 0E AC 2F 0F 85 03 85 01 AF
+         E4 90 01 32 08 AD AF 72 62 91 01 34 48 16 04 38 02 72 8F AC 01 02 E0
+         E1 01 02 B4 2D 08 08 EA AD 38 02 31 95 AC 81 90 00 38 01 31 90 85 00
+         AC DB 91 01 34 FF 4F 00 19 02)
+   (0. 2. |COMMON-LISP-USER|::|*TRAINING-DATA*| |COMMON-LISP-USER|::|SHUFFLE|
+    "                            25%                      50%                      75%                      100%\n"
+    "     ------------------------|------------------------|------------------------|------------------------|\n"
+    3. #\0 |SYSTEM|::|DO-FORMAT-DECIMAL| ": " 60000. 600. #\*
+    |COMMON-LISP-USER|::|FORWARD-PROPAGATE|
+    |COMMON-LISP-USER|::|CALCULATE-ERROR-TERMS|
+    |COMMON-LISP-USER|::|UPDATE-WEIGHTS| ": ")
+   (|COMMON-LISP|::|T| |COMMON-LISP|::|T| |COMMON-LISP|::|T|))
+#Y(#:|33 33 (BREAK)-6| #14Y(00 00 00 00 00 00 00 00 20 01 2E 00 19 01)
+   (|COMMON-LISP|::|BREAK|)
+   (|COMMON-LISP|::|T| |COMMON-LISP|::|T| |COMMON-LISP|::|T|))

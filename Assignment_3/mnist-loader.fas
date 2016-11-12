@@ -71,7 +71,10 @@
            (0.003921569f0)
            (|COMMON-LISP|::|T| |COMMON-LISP|::|NIL| |COMMON-LISP|::|NIL|)
            (|COMMON-LISP-USER|::|X|) |COMMON-LISP|::|NIL| 1)
-        "#x" #10r1/100 #\* "DONE\n" |COMMON-LISP|::|CLOSE| :|ABORT|)
+        "#x" #10r1/100 #\*
+        "\n
+DONE\n\n"
+        |COMMON-LISP|::|CLOSE| :|ABORT|)
        (|COMMON-LISP|::|T| |COMMON-LISP|::|T| |COMMON-LISP|::|T|)
        (|COMMON-LISP-USER|::|LABELS-FILENAME|
         |COMMON-LISP-USER|::|DATA-FILENAME|)

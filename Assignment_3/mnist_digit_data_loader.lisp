@@ -105,7 +105,7 @@
                       (t (vector-push (list target data) ret)))
                 (if (= 0 (mod i (/ num-labels 100)))
                   (princ (format nil "*")))))
-        (princ (format nil "DONE~%"))
+        (princ (format nil "~%DONE~%~%"))
         )
       )
     `(,num-images ,num-input-activations ,ret)))
