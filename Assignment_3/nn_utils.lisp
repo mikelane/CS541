@@ -270,16 +270,6 @@
 
 
 #|
- | Run an input vector though the network and return the index of the maximum
- | output activation.
- |
- |#
-(defun evaluate (input)
-  (forward-propagate input)
-  (find-max *output-activations*))
-
-
-#|
  | Calculate the error terms of the output and hidden nodes. The output error is
  |
  | error_k = o_k * (1 - o_k) * (t_k - o_k)
@@ -388,6 +378,16 @@
           (setf (elt *input-to-hidden-weight-matrix* i)
                 (setf weight-vector (mapcar #'+ weight-vector cur-Del-w-vect)))
           )))
+
+
+#|
+ | Run an input vector though the network and return the index of the maximum
+ | output activation.
+ |
+ |#
+(defun classify (input)
+  (forward-propagate input)
+  (find-max *output-activations*))
 
 
 
