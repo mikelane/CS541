@@ -53,8 +53,9 @@
 (princ (format nil "~%Training progress:~%"))
 (princ (format nil "                            25%                      50%                      75%                      100%~%"))
 (princ (format nil "     ------------------------|------------------------|------------------------|------------------------|~%"))
-(loop for epoch-num from 1 to *number-of-epochs* 
+(loop for epoch-num from 1 to *number-of-epochs*
       while (< *training-accuracy* 1) do
+
       ;; First shuffle the training data before each epoch
       (setf *training-data* (shuffle *training-data*))
 
@@ -70,7 +71,7 @@
             (update-weights input))
 
       ;; Evaluate the accuracy of the training data
-      (princ (format nil "Evaluating accuracy ... "))
+      (princ (format nil " Evaluating accuracy ... "))
       (let ((guess nil)
             (num-correct 0))
         (loop for input across *training-data* do
@@ -86,7 +87,11 @@
                  (setf *max-training-confusion-matrix* (copy-array *training-confusion-matrix*))))
         ;; Keep the 1st epoch's confusion matrix for funsies
         (if (= epoch-num 1)
-          (with-open-file (out training-cm-filename
+          (with-open-file (out (format t "train-initial-conf-matrix-~d-~d-~d-~d.csv"
+                                       *learning-rate*
+                                       *momentum*
+                                       *number-of-epochs*
+                                       *number-hidden-activations*)
                                :direction :output
                                :if-exists :supersede
                                :if-does-not-exist :create)
@@ -100,6 +105,9 @@
                     *momentum*
                     *number-of-epochs*
                     *number-hidden-activations*)))
+
+        ;; reset the training confusion matrix
+        (setf *training-confusion-matrix* (make-array '(10 10) :initial-element 0))
 
         ;; Reset the number correct
         (setf num-correct 0)
@@ -118,7 +126,11 @@
                  (setf *max-testing-confusion-matrix* (copy-array *testing-confusion-matrix*))))
         ;; Keep the 1st epoch's confusion matrix for funsies
         (if (= epoch-num 1)
-          (with-open-file (out testing-cm-filename
+          (with-open-file (out (format t "test-initial-conf-matrix-~d-~d-~d-~d.csv"
+                                       *learning-rate*
+                                       *momentum*
+                                       *number-of-epochs*
+                                       *number-hidden-activations*)
                                :direction :output
                                :if-exists :supersede
                                :if-does-not-exist :create)
@@ -133,11 +145,12 @@
                     *number-of-epochs*
                     *number-hidden-activations*)))
 
-        (princ (format nil "DONE~%"))
+        ;; Reset the testing confusion matrix
+        (setf *testing-confusion-matrix* (make-array '(10 10) :initial-element 0))
 
 
         ;; Append the accuracy data to the historic accuracies
-        (vector-push-extend `(,epoch-num *training-accuracy* *testing-accuracy*) *historic-accuracies*)
+        (vector-push-extend `(,epoch-num ,*training-accuracy* ,*testing-accuracy*) *historic-accuracies*)
         )
       )
 
@@ -183,7 +196,7 @@
                      :if-does-not-exist :create)
   (format out "epoch,training accuracy,test accuracy")
   (loop for row across *historic-accuracies* do
-        (format nil "~{~a~^,~}~%" row))
+        (format out "~{~a~^,~}~%" row))
   (format out
           "~%~d,~d,~d,~d~%"
           *learning-rate*
