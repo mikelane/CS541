@@ -87,7 +87,7 @@
         (princ (format nil " - Image dimensions rows: ~d columns: ~d~%" image-num-rows image-num-cols))
         (princ (format nil " - Total number of input activations: ~d~%" num-input-activations))
         (princ (format nil "--------------------------------------------------------------------------~%"))
-        (princ (format nil "Loading labels and data, merging, and pushing to a vector ...~%~%"))
+        (princ (format nil "~%Loading labels and data, merging, and pushing to a vector ...~%~%"))
         (princ (format nil "                       25%                      50%                      75%                      100%~%"))
         (princ (format nil "------------------------|------------------------|------------------------|------------------------|~%"))
         (let ((target 0)

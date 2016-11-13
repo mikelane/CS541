@@ -21,11 +21,13 @@
  |#
 (defvar *number-hidden-layers* 1)
 (defvar *number-hidden-activations* 5)
+(defvar *number-training-images* (elt training-info 0))
+(defvar *number-testing-images* (elt testing-info 0))
 (defvar *number-input-activations* (1+ (elt training-info 1)))
 (defvar *number-output-activations* 10)
 (defvar *learning-rate* 0.3)
 (defvar *momentum* 0.3)
-(defvar *number-of-epochs* 500)
+(defvar *number-of-epochs* 100)
 
 
 #|
@@ -242,7 +244,7 @@
           (if (> v biggest)
             (progn (setf biggest v)
                    (setf i j))))
-    biggest))
+    i))
 
 
 #|
@@ -390,4 +392,16 @@
   (find-max *output-activations*))
 
 
+#|
+ | Make a copy of an array. This is used to copy the confusion matrix if required
+ |
+ |#
+(defun copy-array (a)
+  (let ((ret (make-array (array-dimensions a) :initial-element 0))
+        (rows (array-dimension a 0))
+        (cols (array-dimension a 1)))
+    (loop for i from 0 below rows do
+          (loop for j from 0 below cols do
+                (setf (aref ret i j) (aref a i j))))
+    ret))
 
