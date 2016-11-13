@@ -87,7 +87,7 @@
                  (setf *max-training-confusion-matrix* (copy-array *training-confusion-matrix*))))
         ;; Keep the 1st epoch's confusion matrix for funsies
         (if (= epoch-num 1)
-          (with-open-file (out (format t "train-initial-conf-matrix-~d-~d-~d-~d.csv"
+          (with-open-file (out (format nil "train-initial-conf-matrix-~d-~d-~d-~d.csv"
                                        *learning-rate*
                                        *momentum*
                                        *number-of-epochs*
@@ -126,7 +126,7 @@
                  (setf *max-testing-confusion-matrix* (copy-array *testing-confusion-matrix*))))
         ;; Keep the 1st epoch's confusion matrix for funsies
         (if (= epoch-num 1)
-          (with-open-file (out (format t "test-initial-conf-matrix-~d-~d-~d-~d.csv"
+          (with-open-file (out (format nil "test-initial-conf-matrix-~d-~d-~d-~d.csv"
                                        *learning-rate*
                                        *momentum*
                                        *number-of-epochs*
@@ -151,6 +151,9 @@
 
         ;; Append the accuracy data to the historic accuracies
         (vector-push-extend `(,epoch-num ,*training-accuracy* ,*testing-accuracy*) *historic-accuracies*)
+
+        (princ (format nil "~%"))
+
         )
       )
 
