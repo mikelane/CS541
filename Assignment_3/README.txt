@@ -45,9 +45,9 @@ data sets by forward propagating the activations and then using the index of the
 max output node value as the classification. Once the accuracy and confusion
 matrices have been calculated, the next epoch begins.
 
-The algorithm runs reasonably quickly with 5 hidden nodes. I didn't time it, but
-it seemed to take 20 or 30 minutes. With 49 hidden nodes, it took about 36
-hours. So it doesn't scale well on a uniprocessor. It'd be perfectly simple to
-make this a parallel algorithm that would fork off as many processes as weights
-or weight vectors in order to save a great deal of time.
-
+The algorithm takes a while even with 5 hidden nodes. I didn't time it, but it
+seemed to take over an hour. With 49 hidden nodes, it took about 36 hours. So
+it doesn't scale well on a uniprocessor. It'd be perfectly simple to make this
+a parallel algorithm that would fork off as many processes as weights or weight
+vectors in order to save a great deal of time. However, there's no time for
+that.
