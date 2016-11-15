@@ -1,4 +1,8 @@
 ;;;;
+;;;; Michael Lane
+;;;; 11/15/16
+;;;;
+;;;;
 ;;;; MNIST Data Loader for Artificial Neural Networks written in LISP
 ;;;;
 ;;;; written by Mike Lane

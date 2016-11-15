@@ -1,5 +1,7 @@
 ;;;;
 ;;;; Michael Lane
+;;;; 11/15/16
+;;;;
 ;;;; CS541 - Artificial Intelligence
 ;;;; Lab 3
 ;;;; Math and utility functions for Lab 3
@@ -11,8 +13,29 @@
  | Read in the data from the mnist files
  |
  |#
-(defvar training-info (import-data "train-labels.idx1-ubyte" "train-images.idx3-ubyte"))
-(defvar testing-info (import-data "t10k-labels.idx1-ubyte" "t10k-images.idx3-ubyte"))
+(with-open-file (in "training.data" :direction :input :if-does-not-exist nil)
+  (if in
+    (progn
+      (princ (format nil "Reading in from training.data file. This takes a minute or two~%"))
+      (defvar *training-data* (read in))
+      (defvar *number-training-images* 60000)
+      (defvar *number-input-activations* 785))
+    (progn
+      (defvar training-info (import-data "train-labels.idx1-ubyte" "train-images.idx3-ubyte"))
+      (defvar *number-training-images* (elt training-info 0))
+      (defvar *number-input-activations* (1+ (elt training-info 1)))
+      (defvar *training-data* (elt training-info 2)))))
+
+(with-open-file (in "testing.data" :direction :input :if-does-not-exist nil)
+  (if in
+    (progn
+      (princ (format nil "Reading in from testing.data file. This takes a minute or two~%"))
+      (defvar *testing-data* (read in))
+      (defvar *number-testing-images* 10000))
+    (progn
+      (defvar testing-info (import-data "t10k-labels.idx1-ubyte" "t10k-images.idx3-ubyte"))
+      (defvar *number-testing-images* (elt testing-info 0))
+      (defvar *testing-data* (elt testing-info 2)))))
 
 
 #|
@@ -20,22 +43,17 @@
  |
  |#
 (defvar *number-hidden-layers* 1)
-(defvar *number-hidden-activations* 49)
-(defvar *number-training-images* (elt training-info 0))
-(defvar *number-testing-images* (elt testing-info 0))
-(defvar *number-input-activations* (1+ (elt training-info 1)))
+(defvar *number-hidden-activations* 4)
+#|
+ |(defvar *number-training-images* (elt training-info 0))
+ |(defvar *number-testing-images* (elt testing-info 0))
+ |(defvar *number-input-activations* (1+ (elt training-info 1)))
+ |#
 (defvar *number-output-activations* 10)
 (defvar *learning-rate* 0.3)
 (defvar *momentum* 0.3)
 (defvar *number-of-epochs* 100)
 
-
-#|
- | Set up the training and testing data
- |
- |#
-(defvar *training-data* (elt training-info 2))
-(defvar *testing-data* (elt testing-info 2))
 
 
 #|
@@ -329,16 +347,6 @@
           for j from 0 below (length *hidden-to-output-weight-matrix*)
           for prev-weight-change-vector in *previous-output-weight-change-matrix*
           for h in *hidden-activations* do
-          ;(princ (format nil "~%----------------------------------------------~%"))
-          ;(princ (format nil "original weight vector: ~s~%" weight-vector))
-          ;(princ (format nil "----------------------------------------------~%"))
-          ;(princ (format nil "    h: ~s~%" h))
-          ;(princ (format nil "    output activations: ~s~%" *output-activations*))
-          ;(princ (format nil "    output error terms: ~s~%" *output-error-terms*))
-          ;(princ (format nil "    prev-weight-change-vector: ~s~%" prev-weight-change-vector))
-          ;(princ (format nil "~%----------------------------------------------~%"))
-          ;(princ (format nil "weight matrix: ~s~%" *hidden-to-output-weight-matrix*))
-          ;(princ (format nil "----------------------------------------------~%"))
           (setf cur-Del-w-vect
                 (loop for del-k in *output-error-terms*
                       for Del-w in prev-weight-change-vector
@@ -349,26 +357,11 @@
                 (setf prev-weight-change-vector cur-Del-w-vect))
           (setf (elt *hidden-to-output-weight-matrix* j)
                 (setf weight-vector (mapcar #'+ weight-vector cur-Del-w-vect)))
-          ;(princ (format nil "~%----------------------------------------------~%"))
-          ;(princ (format nil "*previous-output-weight-change-matrix*: ~s~%"
-                         ;*previous-output-weight-change-matrix*))
-          ;(princ (format nil "updated weight vector: ~s~%" weight-vector))
-          ;(princ (format nil "----------------------------------------------~%"))
           )
     (loop for weight-vector in *input-to-hidden-weight-matrix*
           for i from 0 below (length *input-to-hidden-weight-matrix*)
           for prev-weight-change-vector in *previous-hidden-weight-change-matrix*
           for x in (cadr input) do
-          ;(princ (format nil "~%----------------------------------------------~%"))
-          ;(princ (format nil "original weight vector: ~s~%" weight-vector))
-          ;(princ (format nil "----------------------------------------------~%"))
-          ;(princ (format nil "    x: ~s~%" x))
-          ;(princ (format nil "    hidden activations: ~s~%" (cdr *hidden-activations*)))
-          ;(princ (format nil "    hidden error terms: ~s~%" *hidden-error-terms*))
-          ;(princ (format nil "    prev-weight-change-vector: ~s~%" prev-weight-change-vector))
-          ;(princ (format nil "~%----------------------------------------------~%"))
-          ;(princ (format nil "weight matrix: ~s~%" *input-to-hidden-weight-matrix*))
-          ;(princ (format nil "----------------------------------------------~%"))
           (setf cur-Del-w-vect
                 (loop for del-j in *hidden-error-terms*
                       for Del-w in prev-weight-change-vector
@@ -404,4 +397,3 @@
           (loop for j from 0 below cols do
                 (setf (aref ret i j) (aref a i j))))
     ret))
-

@@ -1,5 +1,7 @@
 ;;;;
 ;;;; Michael Lane
+;;;; 11/15/16
+;;;;
 ;;;; CS541 - Artificial Intelligence
 ;;;; Lab 3
 ;;;; Main Artificial Neural Network
@@ -214,18 +216,20 @@
 
 #|
  | Todo list:
- | 1) Test evaluate function
- |X2) Make 4 confusion matrices (training and testing data, initial and max)
- |X3) Make accuracy vars for training and testing data
- |X4) After each epoch evaluate accuracy of training and testing set
- |x5) Append accuracy to a vector #((epoch-num train-accuracy test-accuracy))
- |x6) After epoch 1, update initial and max confusion matrices for training
- |    and testing sets
- |x7) After each epoch, if accuracy is greater than current max, overwrite max
- |    confusion matrix for training and testing sets
- | 8) Add timing outputs for each training epoch, the total training time, the
- |    total time to classify a set.
- |x9) Output confusion matrices and accuracy after each epoch vector to a csv
- |    file. Make sure the data includes the epoch number as well as the accuracy.
- |10) Create graphs either in jupyter or excel using the CSV files.
+ |  1) Test evaluate function
+ |X 2) Make 4 confusion matrices (training and testing data, initial and max)
+ |X 3) Make accuracy vars for training and testing data
+ |X 4) After each epoch evaluate accuracy of training and testing set
+ |X 5) Append accuracy to a vector #((epoch-num train-accuracy test-accuracy))
+ |X 6) After epoch 1, update initial and max confusion matrices for training
+ |     and testing sets
+ |X 7) After each epoch, if accuracy is greater than current max, overwrite max
+ |     confusion matrix for training and testing sets
+ |  8) Add timing outputs for each training epoch, the total training time, the
+ |     total time to classify a set.
+ |X 9) Output confusion matrices and accuracy after each epoch vector to a csv
+ |     file. Make sure the data includes the epoch number as well as the accuracy.
+ |X10) Create graphs either in jupyter or excel using the CSV files.
+ |
+ | Not enough time to implement the timing mechanism.
  |#
