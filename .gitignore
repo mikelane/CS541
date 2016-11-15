@@ -175,4 +175,5 @@ fabric.properties
 *.fasl
 *.lisp-temp
 
-
+training.data
+testing.data
