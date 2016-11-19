@@ -43,7 +43,7 @@
  |
  |#
 (defvar *number-hidden-layers* 1)
-(defvar *number-hidden-activations* 4)
+(defvar *number-hidden-activations* 49)
 #|
  |(defvar *number-training-images* (elt training-info 0))
  |(defvar *number-testing-images* (elt testing-info 0))

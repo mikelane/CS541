@@ -211,6 +211,7 @@
   (cond (in
           (setf *input-to-hidden-weight-matrix* (read in)))
         (t
+          (break)
           (train-and-evaluate))))
 
 (with-open-file (in "trained-hidden-output-49.data" :direction :input :if-does-not-exist nil)
